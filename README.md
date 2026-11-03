@@ -201,3 +201,42 @@ successful SDK invocation with an invalid vector is recorded as success before
 local validation rejects it; reported usage is still counted. An API exception is
 recorded as error. Recorder failures warn without hiding API or validation errors.
 No live embedding request is performed during imports or offline tests.
+
+## Semantic similarity search
+
+`semantic_similarity.py` searches an in-memory mapping of stored query strings
+to normalized vectors. Supply vectors returned by `EmbeddingGenerator.embed_query`:
+
+```python
+from semantic_similarity import find_most_similar
+
+# query_vector and stored_vector were generated previously by embeddings.py.
+match = find_most_similar(
+    query_vector,
+    {"How can I reduce LLM costs?": stored_vector},
+    threshold=0.9,
+)
+if match is not None:
+    print(match.query, match.score)
+```
+
+The function returns a frozen `SimilarityMatch(query, score)`, or `None` for
+an empty collection or when the best score is below the threshold. The default
+threshold is 0.9; any finite numeric value from -1 to 1 is supported. Equality
+passes the threshold. Ties select the first entry in mapping iteration order.
+
+Vectors must be finite, one-dimensional, nonempty, numeric, and normalized.
+All candidates must match the query's dimensions. Production vectors from
+`embeddings.py` have 768 dimensions; smaller consistent dimensions are accepted
+for independent use. Norm drift within `rtol=1e-6, atol=1e-8` is corrected on
+copies; arbitrary unnormalized vectors, zero vectors, malformed collections,
+and invalid keys or thresholds raise `ValueError`. No invalid entry is silently
+skipped. Identical/opposite score endpoints are stabilized within eight float64
+machine epsilons; interior threshold comparisons have no tolerance.
+
+NumPy computes all candidate scores with one matrix-vector multiplication.
+Each call validates and copies the candidates, taking O(N * D) time and temporary
+memory. There is no persistent index, API call, or storage access. The caller
+must ensure compatible model/task settings; vector values alone cannot verify
+that. Similarity does not guarantee answer equivalence, and the default threshold
+has not been calibrated on a labeled dataset.

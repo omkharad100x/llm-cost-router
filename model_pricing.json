@@ -4,5 +4,10 @@
     "output_usd_per_million": "1.50",
     "cached_input_usd_per_million": "0.025",
     "pricing_version": "standard-text-2026-11-03"
+  },
+  "gemini-embedding-001": {
+    "input_usd_per_million": "0.15",
+    "output_usd_per_million": "0",
+    "pricing_version": "standard-text-2026-11-03"
   }
 }

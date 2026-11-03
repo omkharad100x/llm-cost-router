@@ -1,8 +1,9 @@
-"""Measure synchronous generation calls without retaining prompt or response text."""
+"""Measure synchronous Gemini calls without retaining input or response text."""
 
 from datetime import datetime, timezone
 from decimal import Decimal
 import json
+import math
 from pathlib import Path
 import sys
 import time
@@ -95,6 +96,37 @@ def usage_metrics(response, rates):
     }
 
 
+def embedding_usage_metrics(response, rates):
+    """Use SDK embedding statistics only; never guess tokens from characters."""
+    embeddings = getattr(response, "embeddings", None)
+    input_tokens = None
+    if isinstance(embeddings, (list, tuple)) and len(embeddings) == 1:
+        statistics = getattr(embeddings[0], "statistics", None)
+        count = getattr(statistics, "token_count", None)
+        # The SDK types this field as float, even for integral token counts.
+        if type(count) in (int, float) and math.isfinite(count) and count >= 0:
+            if count == int(count):
+                input_tokens = int(count)
+    cost = None
+    cost_status = "usage_unavailable"
+    if rates is None:
+        cost_status = "pricing_unavailable"
+    elif input_tokens is not None:
+        cost = str(
+            Decimal(input_tokens) * Decimal(str(rates["input_usd_per_million"]))
+            / Decimal(1_000_000)
+        )
+        cost_status = "estimated"
+    return {
+        "input_tokens": input_tokens,
+        "output_tokens": None,
+        "estimated_cost_usd": cost,
+        "cost_status": cost_status,
+        "usage_source": "embedding_statistics" if input_tokens is not None else None,
+        "pricing_version": rates.get("pricing_version") if rates else None,
+    }
+
+
 class JsonlRecorder:
     """Append metrics only, one JSON record per SDK invocation."""
 
@@ -115,12 +147,24 @@ class InstrumentedGenerator:
         self.recorder = recorder
 
     def generate_content(self, *, model, request_kind, **kwargs):
+        return self._request(
+            self.client.models.generate_content, usage_metrics,
+            model, request_kind, kwargs,
+        )
+
+    def embed_content(self, *, model, **kwargs):
+        return self._request(
+            self.client.models.embed_content, embedding_usage_metrics,
+            model, "embedding", kwargs,
+        )
+
+    def _request(self, method, extract_usage, model, request_kind, kwargs):
         timestamp = datetime.now(timezone.utc).isoformat()
         response = None
         status = "error"
         started = time.perf_counter()
         try:
-            response = self.client.models.generate_content(model=model, **kwargs)
+            response = method(model=model, **kwargs)
             status = "success"
             return response
         finally:
@@ -132,7 +176,7 @@ class InstrumentedGenerator:
                     "request_kind": request_kind,
                     "status": status,
                     "latency_ms": latency_ms,
-                    **usage_metrics(response, self.pricing.get(model)),
+                    **extract_usage(response, self.pricing.get(model)),
                 }
                 self.recorder(record)
             except Exception:

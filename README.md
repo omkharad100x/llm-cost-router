@@ -143,3 +143,61 @@ or personal memory and do not make API calls.
 
 If the pricing file cannot be read or validated, the CLI warns and continues
 recording requests with unknown cost. No fallback price is silently substituted.
+
+## Query embedding module
+
+`embeddings.py` exposes `EmbeddingGenerator.embed_query(text)`. Supply the same
+`InstrumentedGenerator` used for generation; it reuses that instance's Gemini
+client (including any HTTP settings), pricing mapping, and metrics recorder.
+The module never imports `main.py`, creates another client, or loads environment
+variables. It is independent of the CLI and is not called by its input loop.
+
+Example wiring inside a future application with an already configured client:
+
+```python
+from pathlib import Path
+
+from embeddings import EmbeddingGenerator
+from instrumentation import InstrumentedGenerator, JsonlRecorder, load_pricing
+
+project_directory = Path.cwd()  # Set this to your application directory.
+generator = InstrumentedGenerator(
+    client,  # Your existing, configured google.genai.Client instance.
+    load_pricing(project_directory / "model_pricing.json"),
+    JsonlRecorder(project_directory / "request_metrics.jsonl"),
+)
+embedder = EmbeddingGenerator(generator)
+# Explicit API request when your application calls this:
+vector = embedder.embed_query("How can I reduce LLM costs?")
+```
+
+Requests use `gemini-embedding-001`, `SEMANTIC_SIMILARITY`, and 768 output
+dimensions. NumPy normalization returns a unit-length float64 array, so the dot
+product of two returned vectors is their cosine similarity. Scaling before the
+norm prevents numeric overflow/underflow. All vectors intended for comparison
+must use this same model, task type, and dimension.
+
+Empty or non-string input raises `ValueError` before any request. Missing,
+multiple, truncated, incorrectly sized, nonnumeric, nonfinite, or zero vectors
+raise `EmbeddingResponseError`. API exceptions propagate unchanged so callers
+can decide how to retry; this module adds no retries.
+
+Embedding requests use the same JSONL instrumentation and log no text or vector.
+The installed SDK 2.29.0 exposes optional token usage as
+`response.embeddings[0].statistics.token_count`, typed as a float. Only finite,
+nonnegative integral counts are accepted. This field is documented primarily for
+the Vertex backend and may be absent for Gemini Developer API responses. Missing
+usage/cost remains null; a reported zero remains zero. Character counts are not
+converted to tokens, and no extra count-tokens call is made.
+
+The configurable standard text embedding estimate is $0.15 per million input
+tokens, checked 2026-11-03:
+https://aistudio.google.com/docs/pricing#gemini-embedding.
+The pricing entry's zero output rate describes input-only billing; the record's
+`output_tokens` remains null because the SDK does not report output token usage.
+
+Latency and status describe the SDK invocation, excluding normalization. A
+successful SDK invocation with an invalid vector is recorded as success before
+local validation rejects it; reported usage is still counted. An API exception is
+recorded as error. Recorder failures warn without hiding API or validation errors.
+No live embedding request is performed during imports or offline tests.

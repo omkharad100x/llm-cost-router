@@ -240,3 +240,141 @@ memory. There is no persistent index, API call, or storage access. The caller
 must ensure compatible model/task settings; vector values alone cannot verify
 that. Similarity does not guarantee answer equivalence, and the default threshold
 has not been calibrated on a labeled dataset.
+
+## Milestone 9: persistent semantic cache
+
+`semantic_cache.SemanticCache` is an independent SQLite cache. It accepts the
+existing `EmbeddingGenerator` and uses `semantic_similarity.find_most_similar`.
+It is not integrated into the CLI, does not generate Gemini answers, and never
+loads `.env` or creates a new Gemini client. No new dependencies are required.
+
+### Eligibility is explicit and denied by default
+
+The caller must supply a trusted assessment for **each exact query**:
+`QueryEligibility(query=..., context_independent=True, non_sensitive=True,
+time_independent=True, external_state_independent=True)`.
+All flags default to false. Approval cannot be reused for different query text,
+and truthy strings/integers do not count as true.
+
+Saving additionally requires `ResponseEligibility(response=..., successful=True,
+not_safety_refusal=True, non_sensitive=True)`, bound to the exact response.
+Empty query/response text, missing approval, API failure, refusal, private content,
+context dependence, and time/external-state dependence are denied. Ineligible
+lookup returns a miss with reason `ineligible`; ineligible save returns `None`.
+Neither operation calls the embedder for ineligible content.
+
+**These are caller attestations, not automatic classifiers.** A trusted policy,
+reviewed allowlist, or human review must establish the flags, using actual API
+status/refusal information for responses. Do not set every flag to true for
+arbitrary user text or let end users approve their own input. Review response
+content as well as query content; a harmless question can produce private text.
+No word-based heuristic can guarantee these properties. Unknown eligibility
+must remain denied.
+
+### API and behavior
+
+```python
+from semantic_cache import SemanticCache
+
+# embedder is your existing EmbeddingGenerator(generator).
+# query_review and response_review are trusted, content-bound assessments.
+with SemanticCache(
+    "semantic_cache.sqlite3",
+    embedder,
+    namespace="public-faq-policy-v1",
+    embedding_version="v1",
+    threshold=0.9,
+    ttl_seconds=86400,
+) as cache:
+    result = cache.lookup(query, eligibility=query_review)
+    if result.hit:
+        cached_answer = result.response
+
+    # Only after a separate application generates and reviews an answer:
+    entry_id = cache.save(
+        query, answer, model_used,
+        eligibility=query_review,
+        response_eligibility=response_review,
+        ttl_seconds=3600,  # Optional per-entry override.
+    )
+    removed = cache.remove_expired()
+    # cache.clear() explicitly clears this namespace across embedding versions.
+```
+
+`CacheLookup` contains `hit`, `response`, `matched_query`,
+`similarity_score`, `entry_id`, and a `reason`. Miss payload fields are
+`None`. Scores at the threshold are accepted; candidates are ordered by creation
+time and ID for deterministic ties.
+
+Lookup embeds approved input, then reads only unexpired entries with matching
+namespace, embedding model/version/task/dimensions/dtype, and eligibility version.
+It checks expiry after embedding latency and again before returning a hit.
+Malformed stored rows are skipped; incompatible rows are excluded. If the best
+entry expires during a local scan, the result is a miss. Lookup does not delete
+expired rows; call `remove_expired()` to reclaim them.
+
+Save generates an embedding for an approved pair and serializes it as a
+little-endian float32 BLOB (3,072 bytes for 768 dimensions), without pickle.
+Only finite normalized vectors with the expected dimensions are accepted.
+The original query is preserved. An exact identity key strips only leading and
+trailing whitespace; case, punctuation, and internal whitespace are retained.
+
+An active exact duplicate with the same response and model returns its existing
+ID without another embedding call or TTL refresh. An active exact query with a
+different response/model raises `CacheConflictError`. An expired or corrupt
+exact entry can be replaced by a fresh approved save. Paraphrases remain distinct
+entries; semantic agreement between their answers is not automatically checked.
+
+SQLite writes use parameterized SQL and short transactions. A second duplicate
+check inside a write transaction handles concurrent writers after embedding.
+No API request occurs while a write lock is held. Errors roll back the transaction.
+
+### Database schema
+
+The `cache_entries` table stores:
+
+| Column | Purpose |
+| --- | --- |
+| `id` | UUID-based text primary key |
+| `namespace` | Caller-defined content/generation policy scope |
+| `query_key`, `original_query` | Exact identity key and original query |
+| `cached_response`, `response_model` | Approved answer and generating model |
+| `embedding` | Little-endian float32 BLOB |
+| `embedding_model`, `embedding_version`, `embedding_task` | Compatibility metadata |
+| `embedding_dimensions`, `embedding_dtype` | Vector representation |
+| `eligibility_version` | Explicit-review policy schema marker |
+| `created_at`, `expires_at` | UTC Unix epoch seconds |
+
+A unique constraint covers namespace, query key, and all embedding/eligibility
+metadata. An index on namespace and expiration supports filtering and cleanup.
+`PRAGMA user_version = 1` identifies the schema. Nonempty unrelated databases,
+unknown schema versions, or unreadable databases raise `CacheError`; they are
+never reset or overwritten. The caller must provide an existing parent directory
+and a dedicated cache database path.
+
+### Limits and operation
+
+- TTL must be finite and positive; an entry expires exactly at `expires_at`.
+  Default TTL is one day. System UTC clock accuracy affects expiry.
+- `remove_expired()` and `clear()` affect only the selected namespace, across its
+  embedding versions, and return deleted-row counts.
+- Use a context manager or `close()`. Each instance belongs to one thread.
+  Separate instances can use the same database with SQLite's five-second lock timeout.
+- Database failures raise sanitized `CacheError`; embedding errors propagate to the
+  caller. Invalid generated vectors raise `ValueError`. No failure becomes a fake hit.
+- Stored queries, answers, and embeddings are plaintext local data. Git ignores
+  standard `.db`, `.sqlite`, `.sqlite3` files and their sidecars. Use one of
+  these extensions. File access controls remain the application's responsibility.
+- Namespaces are logical scoping, not authentication. Choose a new namespace for
+  incompatible generation/prompt policies. The local `embedding_version` must
+  be bumped when embedding behavior changes; it is not a discovered provider revision.
+- Matching scans and copies eligible vectors in O(N * D) time/memory. There is
+  no eviction by size, vector index, scheduled cleanup, or schema migration yet.
+- A lookup followed by a new save embeds twice. Only active exact duplicate saves
+  avoid embedding. Requests retain existing embedding latency/usage/cost instrumentation.
+- Similarity does not prove answer equivalence. The default threshold needs
+  calibration; explicit eligibility alone does not establish factual correctness.
+
+Offline tests use temporary databases, deterministic clocks, and mocked embeddings.
+Run the complete suite with:
+`python -B -m pytest tests -q -p no:cacheprovider`.

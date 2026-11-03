@@ -16,3 +16,11 @@ memory.txt
 # Local request instrumentation
 request_metrics.jsonl
 .pytest_cache/
+
+# Local SQLite caches and sidecar files
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*

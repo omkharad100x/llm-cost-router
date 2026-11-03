@@ -1,6 +1,9 @@
 
 import os
 import time
+from pathlib import Path
+
+from instrumentation import InstrumentedGenerator, JsonlRecorder, load_pricing
 
 from dotenv import load_dotenv
 from google import genai
@@ -32,6 +35,17 @@ if not api_key:
 
 # Create the Gemini client
 client = genai.Client(api_key=api_key)
+project_directory = Path(__file__).resolve().parent
+try:
+    model_pricing = load_pricing(project_directory / "model_pricing.json")
+except (OSError, ValueError):
+    print("Warning: model pricing unavailable; request costs will be unknown.")
+    model_pricing = {}
+generator = InstrumentedGenerator(
+    client,
+    model_pricing,
+    JsonlRecorder(project_directory / "request_metrics.jsonl"),
+)
 
 
 def summarize_conversation(existing_memory, older_messages):
@@ -90,8 +104,9 @@ Return only the updated memory summary, organized into short bullet points.
 """
 
 
-    response = client.models.generate_content(
+    response = generator.generate_content(
         model="gemini-3.1-flash-lite",
+        request_kind="memory_summary",
         contents=prompt
     )
 
@@ -177,8 +192,9 @@ while True:
                 *conversation_history
             ]
 
-            response = client.models.generate_content(
+            response = generator.generate_content(
                 model="gemini-3.1-flash-lite",
+                request_kind="answer",
                 contents=request_contents
             )
 

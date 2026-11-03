@@ -1,0 +1,8 @@
+{
+  "gemini-3.1-flash-lite": {
+    "input_usd_per_million": "0.25",
+    "output_usd_per_million": "1.50",
+    "cached_input_usd_per_million": "0.025",
+    "pricing_version": "standard-text-2026-11-03"
+  }
+}

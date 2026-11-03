@@ -13,3 +13,6 @@ test_memory_output.txt
 
 # Personal long-term memory
 memory.txt
+# Local request instrumentation
+request_metrics.jsonl
+.pytest_cache/

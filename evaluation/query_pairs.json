@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "pairs": [
+    {
+      "id": "safe_tuple",
+      "category": "equivalent",
+      "query_a": "What is a Python tuple?",
+      "query_b": "Explain what a tuple is in Python.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both request the definition of a Python tuple."
+    },
+    {
+      "id": "safe_binary",
+      "category": "equivalent",
+      "query_a": "Convert decimal 10 to binary.",
+      "query_b": "Write ten in base two.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both request the same number in the same base."
+    },
+    {
+      "id": "safe_area",
+      "category": "equivalent",
+      "query_a": "Find the area of a square with side 4 cm.",
+      "query_b": "Calculate the area of a 4 cm by 4 cm square.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Shape, dimensions, units and requested area agree."
+    },
+    {
+      "id": "safe_sort",
+      "category": "equivalent",
+      "query_a": "Sort [3, 1, 2] in ascending order.",
+      "query_b": "Order [3, 1, 2] from smallest to largest.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both require the same ascending sequence."
+    },
+    {
+      "id": "safe_units",
+      "category": "equivalent",
+      "query_a": "How many centimeters are in one meter?",
+      "query_b": "Convert 1 meter into centimeters.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both ask for the same fixed unit conversion."
+    },
+    {
+      "id": "safe_leap",
+      "category": "equivalent",
+      "query_a": "Was 2024 a leap year in the Gregorian calendar?",
+      "query_b": "In the Gregorian calendar, did 2024 have a leap day?",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both ask about the same calendar and historical year."
+    },
+    {
+      "id": "safe_fiction",
+      "category": "equivalent",
+      "query_a": "In the story, Mira owns 3 red books. How many red books does Mira own?",
+      "query_b": "The story says Mira has three red books. State her number of red books.",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both refer only to identical explicitly fictional facts."
+    },
+    {
+      "id": "safe_even",
+      "category": "equivalent",
+      "query_a": "Is 8 an even integer?",
+      "query_b": "Is the integer eight divisible by two without a remainder?",
+      "expected": "SAFE_MATCH",
+      "explanation": "Both ask about the same integer property."
+    },
+    {
+      "id": "negation_include",
+      "category": "negation",
+      "query_a": "List the integers from 1 to 5 that are divisible by 2.",
+      "query_b": "List the integers from 1 to 5 that are not divisible by 2.",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Negation selects a different subset."
+    },
+    {
+      "id": "negation_mutable",
+      "category": "negation",
+      "query_a": "Is a Python list mutable?",
+      "query_b": "Is a Python list immutable?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The requested yes/no propositions are opposites."
+    },
+    {
+      "id": "number_add",
+      "category": "quantities",
+      "query_a": "What is 12 plus 7?",
+      "query_b": "What is 12 plus 8?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Changing an operand changes the sum."
+    },
+    {
+      "id": "number_units",
+      "category": "quantities",
+      "query_a": "Convert 2 kilometers to meters.",
+      "query_b": "Convert 3 kilometers to meters.",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Different quantities require different converted values."
+    },
+    {
+      "id": "year_leap",
+      "category": "dates_years",
+      "query_a": "Was 2020 a leap year in the Gregorian calendar?",
+      "query_b": "Was 2021 a leap year in the Gregorian calendar?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The years have different leap-year outcomes."
+    },
+    {
+      "id": "date_days",
+      "category": "dates_years",
+      "query_a": "How many days are in February 2024?",
+      "query_b": "How many days are in February 2023?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The month length depends on the specified year."
+    },
+    {
+      "id": "entity_capital",
+      "category": "entities_names",
+      "query_a": "What is the capital of France?",
+      "query_b": "What is the capital of Germany?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Different countries require different capital names."
+    },
+    {
+      "id": "entity_story",
+      "category": "entities_names",
+      "query_a": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?",
+      "query_b": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Changing the named subject changes the answer from 2 to 5."
+    },
+    {
+      "id": "operation_math",
+      "category": "operations",
+      "query_a": "What is 9 multiplied by 3?",
+      "query_b": "What is 9 divided by 3?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Multiplication and division produce different results."
+    },
+    {
+      "id": "operation_order",
+      "category": "operations",
+      "query_a": "Sort [4, 2, 1] in ascending order.",
+      "query_b": "Sort [4, 2, 1] in descending order.",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The requested ordering is reversed."
+    },
+    {
+      "id": "condition_bounds",
+      "category": "conditions_constraints",
+      "query_a": "List integers x such that 0 <= x < 3.",
+      "query_b": "List integers x such that 0 < x <= 3.",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The endpoint constraints include different integers."
+    },
+    {
+      "id": "condition_unique",
+      "category": "conditions_constraints",
+      "query_a": "Count all elements in [1, 1, 2].",
+      "query_b": "Count distinct elements in [1, 1, 2].",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "Counting all elements gives 3; distinct elements gives 2."
+    },
+    {
+      "id": "unrelated_tuple",
+      "category": "unrelated",
+      "query_a": "Define a Python dictionary.",
+      "query_b": "How many sides does a triangle have?",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "The subjects and requested answers are unrelated."
+    },
+    {
+      "id": "unrelated_units",
+      "category": "unrelated",
+      "query_a": "Convert one hour to minutes.",
+      "query_b": "Describe the role of a leaf in photosynthesis.",
+      "expected": "MUST_NOT_MATCH",
+      "explanation": "A unit conversion cannot answer the biology question."
+    }
+  ]
+}

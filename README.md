@@ -48,6 +48,8 @@ llm-cost-router/
 ├── model_pricing.json          # Configurable per-model USD rates
 ├── embeddings.py               # Gemini query embeddings and normalization
 ├── semantic_similarity.py      # In-memory cosine search
+├── evaluate_similarity.py      # Offline pairwise evaluation runner
+├── evaluation/                 # Labeled pairs and synthetic vector fixtures
 ├── cache_config.py             # Validated semantic threshold defaults
 ├── semantic_cache.py           # Persistent SQLite cache and eligibility
 ├── requirements.txt            # Pinned runtime dependencies
@@ -138,6 +140,61 @@ and are never treated as missing. A score equal to the threshold is accepted;
 lower thresholds admit more matches and require careful quality evaluation.
 Overrides do not change eligibility requirements, stored entries, or TTLs.
 Configuration is supplied in Python and is not persisted in SQLite.
+
+## Near-miss and false-hit evaluation
+
+`evaluation/query_pairs.json` contains 22 reviewed query pairs with stable IDs,
+categories, `SAFE_MATCH` or `MUST_NOT_MATCH` labels, and explanations.
+Eight equivalent pairs cover paraphrases and matching facts. Fourteen negative
+pairs include negation, quantities, dates/years, entities/names, operations,
+changed conditions/constraints, and unrelated controls. Labels describe whether
+the questions can share an answer; they do not grant cache eligibility.
+
+Run the deterministic evaluation from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -B evaluate_similarity.py
+.\.venv\Scripts\python.exe -B evaluate_similarity.py --threshold 0.95
+```
+
+The runner uses `semantic_similarity.find_most_similar` and shared threshold
+validation. The default comes from `cache_config.DEFAULT_CONFIG` (currently `0.9`).
+It compares each pair independently, with the second query as its single stored
+candidate, and prints JSON containing the threshold, embedding source, metrics,
+and every pair's score, prediction, label, and explanation.
+
+`evaluation/synthetic_embeddings.json` supplies fixed normalized 2D vectors.
+These are **hand-assigned test fixtures, not Gemini embeddings**. They deliberately
+include high-scoring negative pairs and lower-scoring equivalent pairs so that
+false positives and false negatives remain visible. Changing labels never
+changes vectors. No SDK client, API call, secret, or cache database is used.
+
+At the default threshold, these fixtures yield:
+
+| TP | FP | TN | FN | Precision | Recall | False-hit rate |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6 | 7 | 7 | 2 | 46.15% | 75.00% | 50.00% |
+
+`SAFE_MATCH` is the positive class. Precision is `TP / (TP + FP)`,
+recall is `TP / (TP + FN)`, and false-hit rate is the false-positive rate
+`FP / (FP + TN)`: the fraction of negative pairs incorrectly accepted.
+It differs from the fraction of accepted matches that are wrong (`1 - precision`).
+Undefined ratios are JSON `null`. Malformed annotations, missing or invalid
+vectors, and invalid thresholds fail explicitly rather than skipping examples.
+
+To evaluate another **already generated** vector set offline, pass
+`--embeddings path/to/vectors.json`. Use the supplied fixture's versioned JSON
+format (`schema_version`, `source`, and an `embeddings` mapping from exact query
+text to vectors), with all vectors normalized and dimensionally compatible.
+An alternate labeled dataset can be supplied with `--dataset path/to/pairs.json`.
+The runner does not generate vectors.
+
+These fixture metrics verify evaluation plumbing only. They do not estimate
+Gemini accuracy, establish a production threshold, or evaluate cache eligibility,
+multi-candidate retrieval, or factual answer quality. A representative, independently
+reviewed dataset and real precomputed embeddings are needed for calibration.
+High cosine similarity alone cannot establish answer equivalence. The existing
+cache safety requirements continue to apply.
 
 ## Cost and embedding measurement
 

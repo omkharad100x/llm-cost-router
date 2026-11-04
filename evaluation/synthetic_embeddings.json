@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "source": "synthetic-unit-vectors-v1 (not Gemini embeddings)",
+  "embeddings": {
+    "What is a Python tuple?": [
+      1.0,
+      0.0
+    ],
+    "Explain what a tuple is in Python.": [
+      0.98,
+      0.1989974874213242
+    ],
+    "Convert decimal 10 to binary.": [
+      1.0,
+      0.0
+    ],
+    "Write ten in base two.": [
+      0.96,
+      0.28
+    ],
+    "Find the area of a square with side 4 cm.": [
+      1.0,
+      0.0
+    ],
+    "Calculate the area of a 4 cm by 4 cm square.": [
+      0.94,
+      0.3411744421846397
+    ],
+    "Sort [3, 1, 2] in ascending order.": [
+      1.0,
+      0.0
+    ],
+    "Order [3, 1, 2] from smallest to largest.": [
+      0.92,
+      0.39191835884530846
+    ],
+    "How many centimeters are in one meter?": [
+      1.0,
+      0.0
+    ],
+    "Convert 1 meter into centimeters.": [
+      0.91,
+      0.41460824883255754
+    ],
+    "Was 2024 a leap year in the Gregorian calendar?": [
+      1.0,
+      0.0
+    ],
+    "In the Gregorian calendar, did 2024 have a leap day?": [
+      0.88,
+      0.4749736834815167
+    ],
+    "In the story, Mira owns 3 red books. How many red books does Mira own?": [
+      1.0,
+      0.0
+    ],
+    "The story says Mira has three red books. State her number of red books.": [
+      0.84,
+      0.5425863986500216
+    ],
+    "Is 8 an even integer?": [
+      1.0,
+      0.0
+    ],
+    "Is the integer eight divisible by two without a remainder?": [
+      0.99,
+      0.14106735979665894
+    ],
+    "List the integers from 1 to 5 that are divisible by 2.": [
+      1.0,
+      0.0
+    ],
+    "List the integers from 1 to 5 that are not divisible by 2.": [
+      0.97,
+      0.24310491562286443
+    ],
+    "Is a Python list mutable?": [
+      1.0,
+      0.0
+    ],
+    "Is a Python list immutable?": [
+      0.93,
+      0.36755951898978195
+    ],
+    "What is 12 plus 7?": [
+      1.0,
+      0.0
+    ],
+    "What is 12 plus 8?": [
+      0.96,
+      0.28
+    ],
+    "Convert 2 kilometers to meters.": [
+      1.0,
+      0.0
+    ],
+    "Convert 3 kilometers to meters.": [
+      0.86,
+      0.510294032886923
+    ],
+    "Was 2020 a leap year in the Gregorian calendar?": [
+      1.0,
+      0.0
+    ],
+    "Was 2021 a leap year in the Gregorian calendar?": [
+      0.95,
+      0.31224989991991997
+    ],
+    "How many days are in February 2024?": [
+      1.0,
+      0.0
+    ],
+    "How many days are in February 2023?": [
+      0.89,
+      0.4559605246071199
+    ],
+    "What is the capital of France?": [
+      1.0,
+      0.0
+    ],
+    "What is the capital of Germany?": [
+      0.94,
+      0.3411744421846397
+    ],
+    "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?": [
+      1.0,
+      0.0
+    ],
+    "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?": [
+      0.87,
+      0.493051721424842
+    ],
+    "What is 9 multiplied by 3?": [
+      1.0,
+      0.0
+    ],
+    "What is 9 divided by 3?": [
+      0.92,
+      0.39191835884530846
+    ],
+    "Sort [4, 2, 1] in ascending order.": [
+      1.0,
+      0.0
+    ],
+    "Sort [4, 2, 1] in descending order.": [
+      0.83,
+      0.5577633906953736
+    ],
+    "List integers x such that 0 <= x < 3.": [
+      1.0,
+      0.0
+    ],
+    "List integers x such that 0 < x <= 3.": [
+      0.98,
+      0.1989974874213242
+    ],
+    "Count all elements in [1, 1, 2].": [
+      1.0,
+      0.0
+    ],
+    "Count distinct elements in [1, 1, 2].": [
+      0.85,
+      0.526782687642637
+    ],
+    "Define a Python dictionary.": [
+      1.0,
+      0.0
+    ],
+    "How many sides does a triangle have?": [
+      0.15,
+      0.9886859966642595
+    ],
+    "Convert one hour to minutes.": [
+      1.0,
+      0.0
+    ],
+    "Describe the role of a leaf in photosynthesis.": [
+      0.1,
+      0.99498743710662
+    ]
+  }
+}

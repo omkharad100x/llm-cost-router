@@ -1,0 +1,3056 @@
+{
+  "report_schema_version": 1,
+  "runtime": {
+    "python": "3.14.5",
+    "platform": "Windows",
+    "sqlite": "3.50.4",
+    "packages": {
+      "google-genai": "2.29.0",
+      "numpy": "2.5.4"
+    }
+  },
+  "implementation_sha256": {
+    "benchmarks.py": "dfd86de28bb2dd41c74d9abd82f1fe64bce7230908b42a4403cc23230982090e",
+    "semantic_cache.py": "f54ac174ac67e759d64d46622c966df794d5d15800a47a14aae27f71d21d7b9f",
+    "cache_schema.py": "5869d69fb1cd2a889edbc06f9823b688908f32d666e424497c1e805818c82206",
+    "cache_config.py": "426909b5d0c5eef5bf3e8235a711cb0072b3c4091ba26c4f538128b1b31ea194",
+    "semantic_similarity.py": "037cee9e2db6fe7efee39311a21349baba163400c51c21dbb94bf86b0ef883a4",
+    "embeddings.py": "084de27d826d32132728464c40875e7a2bd1504f37895c5678ab4d189c310a26",
+    "evaluate_similarity.py": "7c5112ac4383f98de2d2a02fb7d24b7739ec8d024a6a714b278b3bab2c59be4f",
+    "model_router.py": "6cd68d60537b9932cd35741997a4210a56fffd04714d6306d46b017ed7286bfa",
+    "gemini_models.py": "d17f71b3084aae397a1168eadd0b5a678bdfe55f0c38b991fc91b9d26c84fdeb",
+    "model_config.py": "db30400def64e42e05368fbaaa7e98f95cf55149cc944d0ab486e095e1cc2264",
+    "instrumentation.py": "d6a89f8acf1003e929082141254c3c8eacef4ab5cc82c35d70093bd159c2b9ef",
+    "query_complexity.py": "3e1e3b45bcbdafc0d88e1e0982ff51b1fe01d2cdb79d14424e9d4c7f138b43a2",
+    "complexity_config.py": "08a1f36502a3f8eba627c6a12129be431744f82fb84702415f0428284ef4cc47",
+    "answer_evaluator.py": "f2f6c77fdf2f7cede36897cc92435bf98ddb69a2151004ab284a033681fc485c",
+    "evaluation_config.py": "f1132cdb7516353d9c67141649c65ebc02e955b4c532c2c7c3f20ec74c376f75",
+    "escalation.py": "f5e27a941531699569df2d1b1fceb77bf34f82b99faeb7bafb83eaa0c6910af5"
+  },
+  "configuration": {
+    "thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "lookup_repeats": 2,
+    "models": {
+      "small_model": "gemini-3.1-flash-lite",
+      "large_model": "gemini-3.8-flash"
+    },
+    "routing": {
+      "simple_role": "small",
+      "complex_role": "large",
+      "complexity": {
+        "complex_threshold": 3,
+        "long_query_words": 120,
+        "multiple_tasks_min": 2,
+        "weights": [
+          [
+            "length",
+            1
+          ],
+          [
+            "multiple_tasks",
+            3
+          ],
+          [
+            "multi_step",
+            3
+          ],
+          [
+            "reasoning",
+            3
+          ],
+          [
+            "coding",
+            3
+          ],
+          [
+            "advanced_math",
+            3
+          ],
+          [
+            "analysis",
+            3
+          ],
+          [
+            "explanation",
+            1
+          ],
+          [
+            "context",
+            1
+          ]
+        ]
+      }
+    },
+    "evaluation": {
+      "acceptance_threshold": 0.8,
+      "short_answer_max_words": 3,
+      "max_paragraph_chars": 1200,
+      "fail_on_uncertainty": true,
+      "fail_on_error": true,
+      "fail_on_incomplete": true,
+      "weights": [
+        [
+          "presence",
+          20
+        ],
+        [
+          "relevance",
+          30
+        ],
+        [
+          "completeness",
+          25
+        ],
+        [
+          "structure",
+          10
+        ],
+        [
+          "certainty",
+          10
+        ],
+        [
+          "error_free",
+          5
+        ]
+      ]
+    },
+    "cache_schema_version": 2,
+    "cache_version": "v1",
+    "ttl_seconds": 86400,
+    "fixed_cache_clock": 1000.0,
+    "pricing": {
+      "gemini-3.1-flash-lite": {
+        "input_usd_per_million": "0.25",
+        "output_usd_per_million": "1.50",
+        "cached_input_usd_per_million": "0.025",
+        "pricing_version": "standard-text-2026-11-03"
+      },
+      "gemini-embedding-001": {
+        "input_usd_per_million": "0.15",
+        "output_usd_per_million": "0",
+        "pricing_version": "standard-text-2026-11-03"
+      }
+    }
+  },
+  "datasets": {
+    "pair_count": 22,
+    "routing_case_count": 8,
+    "embedding_source": "synthetic-unit-vectors-v1 (not Gemini embeddings)",
+    "fixture_source": "Reviewed synthetic benchmark fixtures v1; not observed Gemini outputs or usage.",
+    "sha256": {
+      "pairs": "55b1e89092825afce319464e45f26561d53284a0db031d66f0dfbfd8bb73fbc4",
+      "embeddings": "134374f80404ba6d7995dbe2226c2e49becd274da60a4bf6a1e6d5dca2f589b4",
+      "fixtures": "0f8b320e5acda5543514030b46536e9d60317c756fb4258d7c9da6b592f0f4f9",
+      "pricing": "f5d21837662db041c549d3c10872a731bb8698c93b48399383f59a477c317998"
+    }
+  },
+  "similarity_only": [
+    {
+      "threshold": 0.8,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 8,
+        "false_positives": 12,
+        "true_negatives": 2,
+        "false_negatives": 0,
+        "precision": 0.4,
+        "recall": 1.0,
+        "false_hit_rate": 0.8571428571428571
+      },
+      "results": [
+        {
+          "id": "safe_tuple",
+          "category": "equivalent",
+          "query_a": "What is a Python tuple?",
+          "query_b": "Explain what a tuple is in Python.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the definition of a Python tuple.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_binary",
+          "category": "equivalent",
+          "query_a": "Convert decimal 10 to binary.",
+          "query_b": "Write ten in base two.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the same number in the same base.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_area",
+          "category": "equivalent",
+          "query_a": "Find the area of a square with side 4 cm.",
+          "query_b": "Calculate the area of a 4 cm by 4 cm square.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Shape, dimensions, units and requested area agree.",
+          "similarity_score": 0.94,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_sort",
+          "category": "equivalent",
+          "query_a": "Sort [3, 1, 2] in ascending order.",
+          "query_b": "Order [3, 1, 2] from smallest to largest.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both require the same ascending sequence.",
+          "similarity_score": 0.92,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_units",
+          "category": "equivalent",
+          "query_a": "How many centimeters are in one meter?",
+          "query_b": "Convert 1 meter into centimeters.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask for the same fixed unit conversion.",
+          "similarity_score": 0.91,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_leap",
+          "category": "equivalent",
+          "query_a": "Was 2024 a leap year in the Gregorian calendar?",
+          "query_b": "In the Gregorian calendar, did 2024 have a leap day?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same calendar and historical year.",
+          "similarity_score": 0.88,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_fiction",
+          "category": "equivalent",
+          "query_a": "In the story, Mira owns 3 red books. How many red books does Mira own?",
+          "query_b": "The story says Mira has three red books. State her number of red books.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both refer only to identical explicitly fictional facts.",
+          "similarity_score": 0.84,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_even",
+          "category": "equivalent",
+          "query_a": "Is 8 an even integer?",
+          "query_b": "Is the integer eight divisible by two without a remainder?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same integer property.",
+          "similarity_score": 0.99,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_include",
+          "category": "negation",
+          "query_a": "List the integers from 1 to 5 that are divisible by 2.",
+          "query_b": "List the integers from 1 to 5 that are not divisible by 2.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Negation selects a different subset.",
+          "similarity_score": 0.97,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_mutable",
+          "category": "negation",
+          "query_a": "Is a Python list mutable?",
+          "query_b": "Is a Python list immutable?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested yes/no propositions are opposites.",
+          "similarity_score": 0.93,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "number_add",
+          "category": "quantities",
+          "query_a": "What is 12 plus 7?",
+          "query_b": "What is 12 plus 8?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing an operand changes the sum.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "number_units",
+          "category": "quantities",
+          "query_a": "Convert 2 kilometers to meters.",
+          "query_b": "Convert 3 kilometers to meters.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different quantities require different converted values.",
+          "similarity_score": 0.86,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "year_leap",
+          "category": "dates_years",
+          "query_a": "Was 2020 a leap year in the Gregorian calendar?",
+          "query_b": "Was 2021 a leap year in the Gregorian calendar?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The years have different leap-year outcomes.",
+          "similarity_score": 0.95,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "date_days",
+          "category": "dates_years",
+          "query_a": "How many days are in February 2024?",
+          "query_b": "How many days are in February 2023?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The month length depends on the specified year.",
+          "similarity_score": 0.89,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "entity_capital",
+          "category": "entities_names",
+          "query_a": "What is the capital of France?",
+          "query_b": "What is the capital of Germany?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different countries require different capital names.",
+          "similarity_score": 0.94,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "entity_story",
+          "category": "entities_names",
+          "query_a": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?",
+          "query_b": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing the named subject changes the answer from 2 to 5.",
+          "similarity_score": 0.87,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "operation_math",
+          "category": "operations",
+          "query_a": "What is 9 multiplied by 3?",
+          "query_b": "What is 9 divided by 3?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Multiplication and division produce different results.",
+          "similarity_score": 0.92,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "operation_order",
+          "category": "operations",
+          "query_a": "Sort [4, 2, 1] in ascending order.",
+          "query_b": "Sort [4, 2, 1] in descending order.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested ordering is reversed.",
+          "similarity_score": 0.83,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "condition_bounds",
+          "category": "conditions_constraints",
+          "query_a": "List integers x such that 0 <= x < 3.",
+          "query_b": "List integers x such that 0 < x <= 3.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The endpoint constraints include different integers.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "condition_unique",
+          "category": "conditions_constraints",
+          "query_a": "Count all elements in [1, 1, 2].",
+          "query_b": "Count distinct elements in [1, 1, 2].",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Counting all elements gives 3; distinct elements gives 2.",
+          "similarity_score": 0.85,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "unrelated_tuple",
+          "category": "unrelated",
+          "query_a": "Define a Python dictionary.",
+          "query_b": "How many sides does a triangle have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The subjects and requested answers are unrelated.",
+          "similarity_score": 0.15,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "unrelated_units",
+          "category": "unrelated",
+          "query_a": "Convert one hour to minutes.",
+          "query_b": "Describe the role of a leaf in photosynthesis.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "A unit conversion cannot answer the biology question.",
+          "similarity_score": 0.1,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        }
+      ]
+    },
+    {
+      "threshold": 0.9,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 6,
+        "false_positives": 7,
+        "true_negatives": 7,
+        "false_negatives": 2,
+        "precision": 0.46153846153846156,
+        "recall": 0.75,
+        "false_hit_rate": 0.5
+      },
+      "results": [
+        {
+          "id": "safe_tuple",
+          "category": "equivalent",
+          "query_a": "What is a Python tuple?",
+          "query_b": "Explain what a tuple is in Python.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the definition of a Python tuple.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_binary",
+          "category": "equivalent",
+          "query_a": "Convert decimal 10 to binary.",
+          "query_b": "Write ten in base two.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the same number in the same base.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_area",
+          "category": "equivalent",
+          "query_a": "Find the area of a square with side 4 cm.",
+          "query_b": "Calculate the area of a 4 cm by 4 cm square.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Shape, dimensions, units and requested area agree.",
+          "similarity_score": 0.94,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_sort",
+          "category": "equivalent",
+          "query_a": "Sort [3, 1, 2] in ascending order.",
+          "query_b": "Order [3, 1, 2] from smallest to largest.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both require the same ascending sequence.",
+          "similarity_score": 0.92,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_units",
+          "category": "equivalent",
+          "query_a": "How many centimeters are in one meter?",
+          "query_b": "Convert 1 meter into centimeters.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask for the same fixed unit conversion.",
+          "similarity_score": 0.91,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_leap",
+          "category": "equivalent",
+          "query_a": "Was 2024 a leap year in the Gregorian calendar?",
+          "query_b": "In the Gregorian calendar, did 2024 have a leap day?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same calendar and historical year.",
+          "similarity_score": 0.88,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_fiction",
+          "category": "equivalent",
+          "query_a": "In the story, Mira owns 3 red books. How many red books does Mira own?",
+          "query_b": "The story says Mira has three red books. State her number of red books.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both refer only to identical explicitly fictional facts.",
+          "similarity_score": 0.84,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_even",
+          "category": "equivalent",
+          "query_a": "Is 8 an even integer?",
+          "query_b": "Is the integer eight divisible by two without a remainder?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same integer property.",
+          "similarity_score": 0.99,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_include",
+          "category": "negation",
+          "query_a": "List the integers from 1 to 5 that are divisible by 2.",
+          "query_b": "List the integers from 1 to 5 that are not divisible by 2.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Negation selects a different subset.",
+          "similarity_score": 0.97,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_mutable",
+          "category": "negation",
+          "query_a": "Is a Python list mutable?",
+          "query_b": "Is a Python list immutable?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested yes/no propositions are opposites.",
+          "similarity_score": 0.93,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "number_add",
+          "category": "quantities",
+          "query_a": "What is 12 plus 7?",
+          "query_b": "What is 12 plus 8?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing an operand changes the sum.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "number_units",
+          "category": "quantities",
+          "query_a": "Convert 2 kilometers to meters.",
+          "query_b": "Convert 3 kilometers to meters.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different quantities require different converted values.",
+          "similarity_score": 0.86,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "year_leap",
+          "category": "dates_years",
+          "query_a": "Was 2020 a leap year in the Gregorian calendar?",
+          "query_b": "Was 2021 a leap year in the Gregorian calendar?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The years have different leap-year outcomes.",
+          "similarity_score": 0.95,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "date_days",
+          "category": "dates_years",
+          "query_a": "How many days are in February 2024?",
+          "query_b": "How many days are in February 2023?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The month length depends on the specified year.",
+          "similarity_score": 0.89,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "entity_capital",
+          "category": "entities_names",
+          "query_a": "What is the capital of France?",
+          "query_b": "What is the capital of Germany?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different countries require different capital names.",
+          "similarity_score": 0.94,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "entity_story",
+          "category": "entities_names",
+          "query_a": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?",
+          "query_b": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing the named subject changes the answer from 2 to 5.",
+          "similarity_score": 0.87,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "operation_math",
+          "category": "operations",
+          "query_a": "What is 9 multiplied by 3?",
+          "query_b": "What is 9 divided by 3?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Multiplication and division produce different results.",
+          "similarity_score": 0.92,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "operation_order",
+          "category": "operations",
+          "query_a": "Sort [4, 2, 1] in ascending order.",
+          "query_b": "Sort [4, 2, 1] in descending order.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested ordering is reversed.",
+          "similarity_score": 0.83,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "condition_bounds",
+          "category": "conditions_constraints",
+          "query_a": "List integers x such that 0 <= x < 3.",
+          "query_b": "List integers x such that 0 < x <= 3.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The endpoint constraints include different integers.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "condition_unique",
+          "category": "conditions_constraints",
+          "query_a": "Count all elements in [1, 1, 2].",
+          "query_b": "Count distinct elements in [1, 1, 2].",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Counting all elements gives 3; distinct elements gives 2.",
+          "similarity_score": 0.85,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "unrelated_tuple",
+          "category": "unrelated",
+          "query_a": "Define a Python dictionary.",
+          "query_b": "How many sides does a triangle have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The subjects and requested answers are unrelated.",
+          "similarity_score": 0.15,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "unrelated_units",
+          "category": "unrelated",
+          "query_a": "Convert one hour to minutes.",
+          "query_b": "Describe the role of a leaf in photosynthesis.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "A unit conversion cannot answer the biology question.",
+          "similarity_score": 0.1,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        }
+      ]
+    },
+    {
+      "threshold": 0.95,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 3,
+        "false_positives": 4,
+        "true_negatives": 10,
+        "false_negatives": 5,
+        "precision": 0.42857142857142855,
+        "recall": 0.375,
+        "false_hit_rate": 0.2857142857142857
+      },
+      "results": [
+        {
+          "id": "safe_tuple",
+          "category": "equivalent",
+          "query_a": "What is a Python tuple?",
+          "query_b": "Explain what a tuple is in Python.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the definition of a Python tuple.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_binary",
+          "category": "equivalent",
+          "query_a": "Convert decimal 10 to binary.",
+          "query_b": "Write ten in base two.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both request the same number in the same base.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "safe_area",
+          "category": "equivalent",
+          "query_a": "Find the area of a square with side 4 cm.",
+          "query_b": "Calculate the area of a 4 cm by 4 cm square.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Shape, dimensions, units and requested area agree.",
+          "similarity_score": 0.94,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_sort",
+          "category": "equivalent",
+          "query_a": "Sort [3, 1, 2] in ascending order.",
+          "query_b": "Order [3, 1, 2] from smallest to largest.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both require the same ascending sequence.",
+          "similarity_score": 0.92,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_units",
+          "category": "equivalent",
+          "query_a": "How many centimeters are in one meter?",
+          "query_b": "Convert 1 meter into centimeters.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask for the same fixed unit conversion.",
+          "similarity_score": 0.91,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_leap",
+          "category": "equivalent",
+          "query_a": "Was 2024 a leap year in the Gregorian calendar?",
+          "query_b": "In the Gregorian calendar, did 2024 have a leap day?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same calendar and historical year.",
+          "similarity_score": 0.88,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_fiction",
+          "category": "equivalent",
+          "query_a": "In the story, Mira owns 3 red books. How many red books does Mira own?",
+          "query_b": "The story says Mira has three red books. State her number of red books.",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both refer only to identical explicitly fictional facts.",
+          "similarity_score": 0.84,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "safe_even",
+          "category": "equivalent",
+          "query_a": "Is 8 an even integer?",
+          "query_b": "Is the integer eight divisible by two without a remainder?",
+          "expected": "SAFE_MATCH",
+          "explanation": "Both ask about the same integer property.",
+          "similarity_score": 0.99,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_include",
+          "category": "negation",
+          "query_a": "List the integers from 1 to 5 that are divisible by 2.",
+          "query_b": "List the integers from 1 to 5 that are not divisible by 2.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Negation selects a different subset.",
+          "similarity_score": 0.97,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "negation_mutable",
+          "category": "negation",
+          "query_a": "Is a Python list mutable?",
+          "query_b": "Is a Python list immutable?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested yes/no propositions are opposites.",
+          "similarity_score": 0.93,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "number_add",
+          "category": "quantities",
+          "query_a": "What is 12 plus 7?",
+          "query_b": "What is 12 plus 8?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing an operand changes the sum.",
+          "similarity_score": 0.96,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "number_units",
+          "category": "quantities",
+          "query_a": "Convert 2 kilometers to meters.",
+          "query_b": "Convert 3 kilometers to meters.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different quantities require different converted values.",
+          "similarity_score": 0.86,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "year_leap",
+          "category": "dates_years",
+          "query_a": "Was 2020 a leap year in the Gregorian calendar?",
+          "query_b": "Was 2021 a leap year in the Gregorian calendar?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The years have different leap-year outcomes.",
+          "similarity_score": 0.95,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "date_days",
+          "category": "dates_years",
+          "query_a": "How many days are in February 2024?",
+          "query_b": "How many days are in February 2023?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The month length depends on the specified year.",
+          "similarity_score": 0.89,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "entity_capital",
+          "category": "entities_names",
+          "query_a": "What is the capital of France?",
+          "query_b": "What is the capital of Germany?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Different countries require different capital names.",
+          "similarity_score": 0.94,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "entity_story",
+          "category": "entities_names",
+          "query_a": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?",
+          "query_b": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Changing the named subject changes the answer from 2 to 5.",
+          "similarity_score": 0.87,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "operation_math",
+          "category": "operations",
+          "query_a": "What is 9 multiplied by 3?",
+          "query_b": "What is 9 divided by 3?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Multiplication and division produce different results.",
+          "similarity_score": 0.92,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "operation_order",
+          "category": "operations",
+          "query_a": "Sort [4, 2, 1] in ascending order.",
+          "query_b": "Sort [4, 2, 1] in descending order.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The requested ordering is reversed.",
+          "similarity_score": 0.83,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "condition_bounds",
+          "category": "conditions_constraints",
+          "query_a": "List integers x such that 0 <= x < 3.",
+          "query_b": "List integers x such that 0 < x <= 3.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The endpoint constraints include different integers.",
+          "similarity_score": 0.98,
+          "matched": true,
+          "predicted": "SAFE_MATCH"
+        },
+        {
+          "id": "condition_unique",
+          "category": "conditions_constraints",
+          "query_a": "Count all elements in [1, 1, 2].",
+          "query_b": "Count distinct elements in [1, 1, 2].",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "Counting all elements gives 3; distinct elements gives 2.",
+          "similarity_score": 0.85,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "unrelated_tuple",
+          "category": "unrelated",
+          "query_a": "Define a Python dictionary.",
+          "query_b": "How many sides does a triangle have?",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "The subjects and requested answers are unrelated.",
+          "similarity_score": 0.15,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        },
+        {
+          "id": "unrelated_units",
+          "category": "unrelated",
+          "query_a": "Convert one hour to minutes.",
+          "query_b": "Describe the role of a leaf in photosynthesis.",
+          "expected": "MUST_NOT_MATCH",
+          "explanation": "A unit conversion cannot answer the biology question.",
+          "similarity_score": 0.1,
+          "matched": false,
+          "predicted": "MUST_NOT_MATCH"
+        }
+      ]
+    }
+  ],
+  "cache_benchmarks": [
+    {
+      "threshold": 0.8,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 8,
+        "false_positives": 11,
+        "true_negatives": 3,
+        "false_negatives": 0,
+        "precision": 0.42105263157894735,
+        "recall": 1.0,
+        "false_hit_rate": 0.7857142857142857,
+        "true_hits": 8,
+        "false_hits": 11,
+        "true_misses": 3,
+        "false_misses": 0,
+        "hit_rate": 0.8636363636363636,
+        "miss_rate": 0.13636363636363635,
+        "false_miss_rate": 0.0
+      },
+      "eligible_metrics": {
+        "true_positives": 8,
+        "false_positives": 11,
+        "true_negatives": 2,
+        "false_negatives": 0,
+        "precision": 0.42105263157894735,
+        "recall": 1.0,
+        "false_hit_rate": 0.8461538461538461,
+        "true_hits": 8,
+        "false_hits": 11,
+        "true_misses": 2,
+        "false_misses": 0,
+        "hit_rate": 0.9047619047619048,
+        "miss_rate": 0.09523809523809523,
+        "false_miss_rate": 0.0
+      },
+      "eligible_pairs": 21,
+      "rows": [
+        {
+          "id": "safe_tuple",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "safe_binary",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "safe_area",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9400000000000001
+        },
+        {
+          "id": "safe_sort",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.92
+        },
+        {
+          "id": "safe_units",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9100000000000001
+        },
+        {
+          "id": "safe_leap",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.88
+        },
+        {
+          "id": "safe_fiction",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.84
+        },
+        {
+          "id": "safe_even",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.99
+        },
+        {
+          "id": "negation_include",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9700000000000001
+        },
+        {
+          "id": "negation_mutable",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.93
+        },
+        {
+          "id": "number_add",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "number_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.8600000000000001
+        },
+        {
+          "id": "year_leap",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9500000000000001
+        },
+        {
+          "id": "date_days",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.8900000000000001
+        },
+        {
+          "id": "entity_capital",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": false,
+          "seeded": false,
+          "lookup_reason": "ineligible",
+          "similarity_score": null
+        },
+        {
+          "id": "entity_story",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.8700000000000001
+        },
+        {
+          "id": "operation_math",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.92
+        },
+        {
+          "id": "operation_order",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.83
+        },
+        {
+          "id": "condition_bounds",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "condition_unique",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.85
+        },
+        {
+          "id": "unrelated_tuple",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "unrelated_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        }
+      ],
+      "reuse": {
+        "lookup_count": 44,
+        "generation_calls": 6,
+        "generation_calls_avoided": 38,
+        "safe_reuse_count": 16,
+        "unsafe_reuse_count": 22,
+        "repeat_hits_after_first_lookup": 19
+      },
+      "latency": {
+        "total_lookup_ms": 25.507099999998673,
+        "average_lookup_ms": 0.579706818181788,
+        "source": "measured SQLite + mocked embedding + similarity; generation excluded"
+      },
+      "setup_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0013125",
+          "unknown_cost_requests": 21,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 21,
+            "usage_unavailable": 21
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 20.088500000014164,
+          "average_per_request_ms": 0.4782976190479563,
+          "average_per_query_ms": 0.9131136363642802,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": "0.0013125",
+              "average_cost_per_query_usd": "0.00005965909090909090909090909091",
+              "known_cost_subtotal_usd": "0.0013125",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 21
+              }
+            },
+            "usage": {
+              "input_tokens": 2100,
+              "output_tokens": 420,
+              "thinking_tokens": 105,
+              "billed_output_tokens": 525
+            },
+            "latency": {
+              "total_ms": 18.809900000093194,
+              "average_per_request_ms": 0.8957095238139616,
+              "average_per_query_ms": 0.8549954545496906,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 21,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 21
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.2785999999209707,
+              "average_per_request_ms": 0.060885714281950984,
+              "average_per_query_ms": 0.05811818181458958,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "request_metrics": {
+        "requests": 48,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0003750",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 6,
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 1.6446999999857326,
+          "average_per_request_ms": 0.03426458333303609,
+          "average_per_query_ms": 0.037379545454221196,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 6,
+            "cost": {
+              "estimated_cost_usd": "0.0003750",
+              "average_cost_per_query_usd": "0.000008522727272727272727272727273",
+              "known_cost_subtotal_usd": "0.0003750",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 6
+              }
+            },
+            "usage": {
+              "input_tokens": 600,
+              "output_tokens": 120,
+              "thinking_tokens": 30,
+              "billed_output_tokens": 150
+            },
+            "latency": {
+              "total_ms": 0.3963000000339889,
+              "average_per_request_ms": 0.06605000000566481,
+              "average_per_query_ms": 0.009006818182590658,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.2483999999517437,
+              "average_per_request_ms": 0.029723809522660564,
+              "average_per_query_ms": 0.028372727271630538,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "generation_metrics": {
+        "requests": 6,
+        "cost": {
+          "estimated_cost_usd": "0.0003750",
+          "average_cost_per_query_usd": "0.000008522727272727272727272727273",
+          "known_cost_subtotal_usd": "0.0003750",
+          "unknown_cost_requests": 0,
+          "complete": true,
+          "status": "estimated",
+          "attempt_statuses": {
+            "estimated": 6
+          }
+        },
+        "usage": {
+          "input_tokens": 600,
+          "output_tokens": 120,
+          "thinking_tokens": 30,
+          "billed_output_tokens": 150
+        },
+        "latency": {
+          "total_ms": 0.3963000000339889,
+          "average_per_request_ms": 0.06605000000566481,
+          "average_per_query_ms": 0.009006818182590658,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 6,
+            "cost": {
+              "estimated_cost_usd": "0.0003750",
+              "average_cost_per_query_usd": "0.000008522727272727272727272727273",
+              "known_cost_subtotal_usd": "0.0003750",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 6
+              }
+            },
+            "usage": {
+              "input_tokens": 600,
+              "output_tokens": 120,
+              "thinking_tokens": 30,
+              "billed_output_tokens": 150
+            },
+            "latency": {
+              "total_ms": 0.3963000000339889,
+              "average_per_request_ms": 0.06605000000566481,
+              "average_per_query_ms": 0.009006818182590658,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "embedding_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 1.2483999999517437,
+          "average_per_request_ms": 0.029723809522660564,
+          "average_per_query_ms": 0.028372727271630538,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.2483999999517437,
+              "average_per_request_ms": 0.029723809522660564,
+              "average_per_query_ms": 0.028372727271630538,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.9,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 6,
+        "false_positives": 6,
+        "true_negatives": 8,
+        "false_negatives": 2,
+        "precision": 0.5,
+        "recall": 0.75,
+        "false_hit_rate": 0.42857142857142855,
+        "true_hits": 6,
+        "false_hits": 6,
+        "true_misses": 8,
+        "false_misses": 2,
+        "hit_rate": 0.5454545454545454,
+        "miss_rate": 0.45454545454545453,
+        "false_miss_rate": 0.25
+      },
+      "eligible_metrics": {
+        "true_positives": 6,
+        "false_positives": 6,
+        "true_negatives": 7,
+        "false_negatives": 2,
+        "precision": 0.5,
+        "recall": 0.75,
+        "false_hit_rate": 0.46153846153846156,
+        "true_hits": 6,
+        "false_hits": 6,
+        "true_misses": 7,
+        "false_misses": 2,
+        "hit_rate": 0.5714285714285714,
+        "miss_rate": 0.42857142857142855,
+        "false_miss_rate": 0.25
+      },
+      "eligible_pairs": 21,
+      "rows": [
+        {
+          "id": "safe_tuple",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "safe_binary",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "safe_area",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9400000000000001
+        },
+        {
+          "id": "safe_sort",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.92
+        },
+        {
+          "id": "safe_units",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9100000000000001
+        },
+        {
+          "id": "safe_leap",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_fiction",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_even",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.99
+        },
+        {
+          "id": "negation_include",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9700000000000001
+        },
+        {
+          "id": "negation_mutable",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.93
+        },
+        {
+          "id": "number_add",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "number_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "year_leap",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9500000000000001
+        },
+        {
+          "id": "date_days",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "entity_capital",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": false,
+          "seeded": false,
+          "lookup_reason": "ineligible",
+          "similarity_score": null
+        },
+        {
+          "id": "entity_story",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "operation_math",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.92
+        },
+        {
+          "id": "operation_order",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "condition_bounds",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "condition_unique",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "unrelated_tuple",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "unrelated_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        }
+      ],
+      "reuse": {
+        "lookup_count": 44,
+        "generation_calls": 20,
+        "generation_calls_avoided": 24,
+        "safe_reuse_count": 12,
+        "unsafe_reuse_count": 12,
+        "repeat_hits_after_first_lookup": 12
+      },
+      "latency": {
+        "total_lookup_ms": 27.631200000030276,
+        "average_lookup_ms": 0.6279818181825063,
+        "source": "measured SQLite + mocked embedding + similarity; generation excluded"
+      },
+      "setup_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0013125",
+          "unknown_cost_requests": 21,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 21,
+            "usage_unavailable": 21
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 2.30969999998365,
+          "average_per_request_ms": 0.054992857142467856,
+          "average_per_query_ms": 0.10498636363562044,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": "0.0013125",
+              "average_cost_per_query_usd": "0.00005965909090909090909090909091",
+              "known_cost_subtotal_usd": "0.0013125",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 21
+              }
+            },
+            "usage": {
+              "input_tokens": 2100,
+              "output_tokens": 420,
+              "thinking_tokens": 105,
+              "billed_output_tokens": 525
+            },
+            "latency": {
+              "total_ms": 1.7397000000300977,
+              "average_per_request_ms": 0.08284285714429036,
+              "average_per_query_ms": 0.0790772727286408,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 21,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 21
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 0.5699999999535521,
+              "average_per_request_ms": 0.02714285714064534,
+              "average_per_query_ms": 0.02590909090697964,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "request_metrics": {
+        "requests": 62,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0012500",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 20,
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 3.199700000067196,
+          "average_per_request_ms": 0.05160806451721284,
+          "average_per_query_ms": 0.07272045454698173,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 20,
+            "cost": {
+              "estimated_cost_usd": "0.0012500",
+              "average_cost_per_query_usd": "0.00002840909090909090909090909091",
+              "known_cost_subtotal_usd": "0.0012500",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 20
+              }
+            },
+            "usage": {
+              "input_tokens": 2000,
+              "output_tokens": 400,
+              "thinking_tokens": 100,
+              "billed_output_tokens": 500
+            },
+            "latency": {
+              "total_ms": 1.7416999999966265,
+              "average_per_request_ms": 0.08708499999983133,
+              "average_per_query_ms": 0.03958409090901424,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.4580000000705695,
+              "average_per_request_ms": 0.034714285715965944,
+              "average_per_query_ms": 0.033136363637967486,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "generation_metrics": {
+        "requests": 20,
+        "cost": {
+          "estimated_cost_usd": "0.0012500",
+          "average_cost_per_query_usd": "0.00002840909090909090909090909091",
+          "known_cost_subtotal_usd": "0.0012500",
+          "unknown_cost_requests": 0,
+          "complete": true,
+          "status": "estimated",
+          "attempt_statuses": {
+            "estimated": 20
+          }
+        },
+        "usage": {
+          "input_tokens": 2000,
+          "output_tokens": 400,
+          "thinking_tokens": 100,
+          "billed_output_tokens": 500
+        },
+        "latency": {
+          "total_ms": 1.7416999999966265,
+          "average_per_request_ms": 0.08708499999983133,
+          "average_per_query_ms": 0.03958409090901424,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 20,
+            "cost": {
+              "estimated_cost_usd": "0.0012500",
+              "average_cost_per_query_usd": "0.00002840909090909090909090909091",
+              "known_cost_subtotal_usd": "0.0012500",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 20
+              }
+            },
+            "usage": {
+              "input_tokens": 2000,
+              "output_tokens": 400,
+              "thinking_tokens": 100,
+              "billed_output_tokens": 500
+            },
+            "latency": {
+              "total_ms": 1.7416999999966265,
+              "average_per_request_ms": 0.08708499999983133,
+              "average_per_query_ms": 0.03958409090901424,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "embedding_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 1.4580000000705695,
+          "average_per_request_ms": 0.034714285715965944,
+          "average_per_query_ms": 0.033136363637967486,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.4580000000705695,
+              "average_per_request_ms": 0.034714285715965944,
+              "average_per_query_ms": 0.033136363637967486,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.95,
+      "pair_count": 22,
+      "metrics": {
+        "true_positives": 3,
+        "false_positives": 4,
+        "true_negatives": 10,
+        "false_negatives": 5,
+        "precision": 0.42857142857142855,
+        "recall": 0.375,
+        "false_hit_rate": 0.2857142857142857,
+        "true_hits": 3,
+        "false_hits": 4,
+        "true_misses": 10,
+        "false_misses": 5,
+        "hit_rate": 0.3181818181818182,
+        "miss_rate": 0.6818181818181818,
+        "false_miss_rate": 0.625
+      },
+      "eligible_metrics": {
+        "true_positives": 3,
+        "false_positives": 4,
+        "true_negatives": 9,
+        "false_negatives": 5,
+        "precision": 0.42857142857142855,
+        "recall": 0.375,
+        "false_hit_rate": 0.3076923076923077,
+        "true_hits": 3,
+        "false_hits": 4,
+        "true_misses": 9,
+        "false_misses": 5,
+        "hit_rate": 0.3333333333333333,
+        "miss_rate": 0.6666666666666666,
+        "false_miss_rate": 0.625
+      },
+      "eligible_pairs": 21,
+      "rows": [
+        {
+          "id": "safe_tuple",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "safe_binary",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "safe_area",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_sort",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_units",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_leap",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_fiction",
+          "expected": "SAFE_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "safe_even",
+          "expected": "SAFE_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.99
+        },
+        {
+          "id": "negation_include",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9700000000000001
+        },
+        {
+          "id": "negation_mutable",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "number_add",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.96
+        },
+        {
+          "id": "number_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "year_leap",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.9500000000000001
+        },
+        {
+          "id": "date_days",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "entity_capital",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": false,
+          "seeded": false,
+          "lookup_reason": "ineligible",
+          "similarity_score": null
+        },
+        {
+          "id": "entity_story",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "operation_math",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "operation_order",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "condition_bounds",
+          "expected": "MUST_NOT_MATCH",
+          "matched": true,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "hit",
+          "similarity_score": 0.98
+        },
+        {
+          "id": "condition_unique",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "unrelated_tuple",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        },
+        {
+          "id": "unrelated_units",
+          "expected": "MUST_NOT_MATCH",
+          "matched": false,
+          "eligible": true,
+          "seeded": true,
+          "lookup_reason": "miss",
+          "similarity_score": null
+        }
+      ],
+      "reuse": {
+        "lookup_count": 44,
+        "generation_calls": 30,
+        "generation_calls_avoided": 14,
+        "safe_reuse_count": 6,
+        "unsafe_reuse_count": 8,
+        "repeat_hits_after_first_lookup": 7
+      },
+      "latency": {
+        "total_lookup_ms": 27.93339999982436,
+        "average_lookup_ms": 0.6348499999960082,
+        "source": "measured SQLite + mocked embedding + similarity; generation excluded"
+      },
+      "setup_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0013125",
+          "unknown_cost_requests": 21,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 21,
+            "usage_unavailable": 21
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 2.3099999998805743,
+          "average_per_request_ms": 0.05499999999715653,
+          "average_per_query_ms": 0.10499999999457156,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": "0.0013125",
+              "average_cost_per_query_usd": "0.00005965909090909090909090909091",
+              "known_cost_subtotal_usd": "0.0013125",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 21
+              }
+            },
+            "usage": {
+              "input_tokens": 2100,
+              "output_tokens": 420,
+              "thinking_tokens": 105,
+              "billed_output_tokens": 525
+            },
+            "latency": {
+              "total_ms": 1.6736999999409363,
+              "average_per_request_ms": 0.07969999999718744,
+              "average_per_query_ms": 0.07607727272458802,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 21,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 21,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 21
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 0.6362999999396379,
+              "average_per_request_ms": 0.030299999997125616,
+              "average_per_query_ms": 0.02892272726998354,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "request_metrics": {
+        "requests": 72,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0.0018750",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "estimated": 30,
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 4.0158999998425315,
+          "average_per_request_ms": 0.055776388886701826,
+          "average_per_query_ms": 0.09127045454187571,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 30,
+            "cost": {
+              "estimated_cost_usd": "0.0018750",
+              "average_cost_per_query_usd": "0.00004261363636363636363636363636",
+              "known_cost_subtotal_usd": "0.0018750",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 30
+              }
+            },
+            "usage": {
+              "input_tokens": 3000,
+              "output_tokens": 600,
+              "thinking_tokens": 150,
+              "billed_output_tokens": 750
+            },
+            "latency": {
+              "total_ms": 2.426499999984344,
+              "average_per_request_ms": 0.08088333333281146,
+              "average_per_query_ms": 0.05514772727237145,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          },
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.5893999998581876,
+              "average_per_request_ms": 0.03784285713948066,
+              "average_per_query_ms": 0.036122727269504266,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "generation_metrics": {
+        "requests": 30,
+        "cost": {
+          "estimated_cost_usd": "0.0018750",
+          "average_cost_per_query_usd": "0.00004261363636363636363636363636",
+          "known_cost_subtotal_usd": "0.0018750",
+          "unknown_cost_requests": 0,
+          "complete": true,
+          "status": "estimated",
+          "attempt_statuses": {
+            "estimated": 30
+          }
+        },
+        "usage": {
+          "input_tokens": 3000,
+          "output_tokens": 600,
+          "thinking_tokens": 150,
+          "billed_output_tokens": 750
+        },
+        "latency": {
+          "total_ms": 2.426499999984344,
+          "average_per_request_ms": 0.08088333333281146,
+          "average_per_query_ms": 0.05514772727237145,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-3.1-flash-lite": {
+            "requests": 30,
+            "cost": {
+              "estimated_cost_usd": "0.0018750",
+              "average_cost_per_query_usd": "0.00004261363636363636363636363636",
+              "known_cost_subtotal_usd": "0.0018750",
+              "unknown_cost_requests": 0,
+              "complete": true,
+              "status": "estimated",
+              "attempt_statuses": {
+                "estimated": 30
+              }
+            },
+            "usage": {
+              "input_tokens": 3000,
+              "output_tokens": 600,
+              "thinking_tokens": 150,
+              "billed_output_tokens": 750
+            },
+            "latency": {
+              "total_ms": 2.426499999984344,
+              "average_per_request_ms": 0.08088333333281146,
+              "average_per_query_ms": 0.05514772727237145,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      },
+      "embedding_metrics": {
+        "requests": 42,
+        "cost": {
+          "estimated_cost_usd": null,
+          "average_cost_per_query_usd": null,
+          "known_cost_subtotal_usd": "0",
+          "unknown_cost_requests": 42,
+          "complete": false,
+          "status": "incomplete",
+          "attempt_statuses": {
+            "usage_unavailable": 42
+          }
+        },
+        "usage": {
+          "input_tokens": null,
+          "output_tokens": null,
+          "thinking_tokens": null,
+          "billed_output_tokens": null
+        },
+        "latency": {
+          "total_ms": 1.5893999998581876,
+          "average_per_request_ms": 0.03784285713948066,
+          "average_per_query_ms": 0.036122727269504266,
+          "source": "measured local mock SDK call overhead; not provider latency"
+        },
+        "by_model": {
+          "gemini-embedding-001": {
+            "requests": 42,
+            "cost": {
+              "estimated_cost_usd": null,
+              "average_cost_per_query_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 42,
+              "complete": false,
+              "status": "incomplete",
+              "attempt_statuses": {
+                "usage_unavailable": 42
+              }
+            },
+            "usage": {
+              "input_tokens": null,
+              "output_tokens": null,
+              "thinking_tokens": null,
+              "billed_output_tokens": null
+            },
+            "latency": {
+              "total_ms": 1.5893999998581876,
+              "average_per_request_ms": 0.03784285713948066,
+              "average_per_query_ms": 0.036122727269504266,
+              "source": "measured local mock SDK call overhead; not provider latency"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "pipeline_benchmark": {
+    "cases": [
+      {
+        "id": "simple_pass",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 5,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": false,
+        "escalation_reason": "Initial answer passed evaluation; escalation was not required.",
+        "final_attempt_index": 0,
+        "final_decision": "pass",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "pass",
+            "quality_score": 1.0,
+            "quality_reasons": [
+              "Score meets the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "Found 2 shared content terms; this is lexical evidence only.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "pass"
+          }
+        ]
+      },
+      {
+        "id": "escalation_pass",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 6,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": true,
+        "escalation_reason": "Initial small-model answer failed evaluation; escalated once to the large role.",
+        "final_attempt_index": 1,
+        "final_decision": "pass",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "fail",
+            "quality_score": 0.9,
+            "quality_reasons": [
+              "Acceptance blocked: explicit_uncertainty.",
+              "Answer contains non-placeholder text.",
+              "Found 2 shared content terms; this is lexical evidence only.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "Explicit uncertainty or inability detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "fail"
+          },
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "pass",
+            "quality_score": 0.85,
+            "quality_reasons": [
+              "Score meets the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "Concise factual-style reply; relevance cannot be established lexically.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "pass"
+          }
+        ]
+      },
+      {
+        "id": "both_fail_second_better",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 2,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": true,
+        "escalation_reason": "Initial small-model answer failed evaluation; escalated once to the large role.",
+        "final_attempt_index": 1,
+        "final_decision": "fail",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "fail",
+            "quality_score": 0.0,
+            "quality_reasons": [
+              "Acceptance blocked: missing_answer.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected."
+            ],
+            "expected_quality": "fail"
+          },
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "fail",
+            "quality_score": 0.7,
+            "quality_reasons": [
+              "Score is below the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "No shared content terms detected.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "fail"
+          }
+        ]
+      },
+      {
+        "id": "both_fail_tie",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 3,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": true,
+        "escalation_reason": "Initial small-model answer failed evaluation; escalated once to the large role.",
+        "final_attempt_index": 0,
+        "final_decision": "fail",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "fail",
+            "quality_score": 0.0,
+            "quality_reasons": [
+              "Acceptance blocked: missing_answer.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected."
+            ],
+            "expected_quality": "fail"
+          },
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "fail",
+            "quality_score": 0.0,
+            "quality_reasons": [
+              "Acceptance blocked: missing_answer.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected."
+            ],
+            "expected_quality": "fail"
+          }
+        ]
+      },
+      {
+        "id": "both_fail_initial_better",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 4,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": true,
+        "escalation_reason": "Initial small-model answer failed evaluation; escalated once to the large role.",
+        "final_attempt_index": 0,
+        "final_decision": "fail",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "fail",
+            "quality_score": 0.7,
+            "quality_reasons": [
+              "Score is below the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "No shared content terms detected.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "fail"
+          },
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "fail",
+            "quality_score": 0.0,
+            "quality_reasons": [
+              "Acceptance blocked: missing_answer.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected.",
+              "No meaningful answer text detected."
+            ],
+            "expected_quality": "fail"
+          }
+        ]
+      },
+      {
+        "id": "complex_pass",
+        "classification": {
+          "label": "complex",
+          "score": 3,
+          "signals": [
+            {
+              "name": "coding",
+              "weight": 3,
+              "reason": "The query requests code generation, debugging, or refactoring."
+            }
+          ],
+          "reasons": [
+            "The query requests code generation, debugging, or refactoring."
+          ],
+          "word_count": 8,
+          "instruction_count": 1
+        },
+        "expected_classification": "complex",
+        "initial_role": "large",
+        "routing_decision": {
+          "selected_role": "large",
+          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is unavailable; estimated cost remains unknown. Cost optimality has not been evaluated.",
+          "pricing_status": "unavailable",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": false,
+        "escalation_reason": "Initial answer passed evaluation; escalation was not required.",
+        "final_attempt_index": 0,
+        "final_decision": "pass",
+        "attempts": [
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "pass",
+            "quality_score": 1.0,
+            "quality_reasons": [
+              "Score meets the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "Found 1 shared content terms; this is lexical evidence only.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "pass"
+          }
+        ]
+      },
+      {
+        "id": "complex_fail",
+        "classification": {
+          "label": "complex",
+          "score": 3,
+          "signals": [
+            {
+              "name": "reasoning",
+              "weight": 3,
+              "reason": "The query requests a proof, derivation, justification, or reasoning."
+            }
+          ],
+          "reasons": [
+            "The query requests a proof, derivation, justification, or reasoning."
+          ],
+          "word_count": 9,
+          "instruction_count": 1
+        },
+        "expected_classification": "complex",
+        "initial_role": "large",
+        "routing_decision": {
+          "selected_role": "large",
+          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is unavailable; estimated cost remains unknown. Cost optimality has not been evaluated.",
+          "pricing_status": "unavailable",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": false,
+        "escalation_reason": "Initial answer failed evaluation; the large role was already used.",
+        "final_attempt_index": 0,
+        "final_decision": "fail",
+        "attempts": [
+          {
+            "role": "large",
+            "model": "gemini-3.8-flash",
+            "quality_decision": "fail",
+            "quality_score": 0.6,
+            "quality_reasons": [
+              "Acceptance blocked: explicit_uncertainty.",
+              "Answer contains non-placeholder text.",
+              "No shared content terms detected.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "Explicit uncertainty or inability detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "fail"
+          }
+        ]
+      },
+      {
+        "id": "missing_usage",
+        "classification": {
+          "label": "simple",
+          "score": 0,
+          "signals": [],
+          "reasons": [
+            "No configured complexity signal was detected."
+          ],
+          "word_count": 7,
+          "instruction_count": 1
+        },
+        "expected_classification": "simple",
+        "initial_role": "small",
+        "routing_decision": {
+          "selected_role": "small",
+          "reason": "Complexity label simple (score 0) maps to the small role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
+          "policy": "complexity-v1",
+          "cost_optimized": false
+        },
+        "escalated": false,
+        "escalation_reason": "Initial answer passed evaluation; escalation was not required.",
+        "final_attempt_index": 0,
+        "final_decision": "pass",
+        "attempts": [
+          {
+            "role": "small",
+            "model": "gemini-3.1-flash-lite",
+            "quality_decision": "pass",
+            "quality_score": 0.85,
+            "quality_reasons": [
+              "Score meets the acceptance threshold.",
+              "Answer contains non-placeholder text.",
+              "Concise factual-style reply; relevance cannot be established lexically.",
+              "No supported explicit requirement appears unmet.",
+              "No obvious structure issue detected.",
+              "No explicit inability phrase detected.",
+              "No leading failure message detected."
+            ],
+            "expected_quality": "pass"
+          }
+        ]
+      }
+    ],
+    "routing_metrics": {
+      "query_count": 8,
+      "classifications": {
+        "simple": 6,
+        "complex": 2
+      },
+      "initial_selections": {
+        "small": 6,
+        "large": 2
+      },
+      "routing_distribution": {
+        "small": 0.75,
+        "large": 0.25
+      },
+      "classification_fixture_agreement": 1.0,
+      "all_attempt_roles": {
+        "small": 6,
+        "large": 6
+      }
+    },
+    "escalation_metrics": {
+      "initial_answers_accepted": 3,
+      "escalations_triggered": 4,
+      "escalation_rate": 0.5,
+      "successful_escalations": 1,
+      "escalation_success_rate": 0.25,
+      "both_answers_fail": 3,
+      "total_model_attempts": 12,
+      "average_attempts_per_query": 1.5
+    },
+    "quality_metrics": {
+      "attempt_passes": 4,
+      "attempt_failures": 8,
+      "final_passes": 4,
+      "average_attempt_score": 0.5499999999999999,
+      "fixture_label_agreement": 1.0,
+      "factual_correctness_verified": false
+    },
+    "request_metrics": {
+      "requests": 12,
+      "cost": {
+        "estimated_cost_usd": null,
+        "average_cost_per_query_usd": null,
+        "known_cost_subtotal_usd": "0.0003125",
+        "unknown_cost_requests": 7,
+        "complete": false,
+        "status": "pricing_unavailable",
+        "attempt_statuses": {
+          "estimated": 5,
+          "pricing_unavailable": 6,
+          "usage_unavailable": 1
+        }
+      },
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "thinking_tokens": null,
+        "billed_output_tokens": null
+      },
+      "latency": {
+        "total_ms": 0.40799999999308056,
+        "average_per_request_ms": 0.03399999999942338,
+        "average_per_query_ms": 0.05099999999913507,
+        "source": "measured local mock SDK call overhead; not provider latency"
+      },
+      "by_model": {
+        "gemini-3.1-flash-lite": {
+          "requests": 6,
+          "cost": {
+            "estimated_cost_usd": null,
+            "average_cost_per_query_usd": null,
+            "known_cost_subtotal_usd": "0.0003125",
+            "unknown_cost_requests": 1,
+            "complete": false,
+            "status": "incomplete",
+            "attempt_statuses": {
+              "estimated": 5,
+              "usage_unavailable": 1
+            }
+          },
+          "usage": {
+            "input_tokens": null,
+            "output_tokens": null,
+            "thinking_tokens": null,
+            "billed_output_tokens": null
+          },
+          "latency": {
+            "total_ms": 0.21769999997900413,
+            "average_per_request_ms": 0.03628333332983402,
+            "average_per_query_ms": 0.027212499997375517,
+            "source": "measured local mock SDK call overhead; not provider latency"
+          }
+        },
+        "gemini-3.8-flash": {
+          "requests": 6,
+          "cost": {
+            "estimated_cost_usd": null,
+            "average_cost_per_query_usd": null,
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 6,
+            "complete": false,
+            "status": "pricing_unavailable",
+            "attempt_statuses": {
+              "pricing_unavailable": 6
+            }
+          },
+          "usage": {
+            "input_tokens": 600,
+            "output_tokens": 120,
+            "thinking_tokens": 30,
+            "billed_output_tokens": 150
+          },
+          "latency": {
+            "total_ms": 0.19030000001407643,
+            "average_per_request_ms": 0.03171666666901274,
+            "average_per_query_ms": 0.023787500001759554,
+            "source": "measured local mock SDK call overhead; not provider latency"
+          }
+        }
+      }
+    }
+  },
+  "measurement_notes": [
+    "Offline synthetic vectors and mock SDK text/token fixtures; no actual API spend or real Gemini quality measured.",
+    "Generation timings measure instrumented mock SDK execution, not full routing/evaluation time or provider latency.",
+    "Lookup timings include mock embedding, normalization, SQLite, and cosine search; generation is timed separately.",
+    "One stored candidate per isolated pair namespace; zero padding to 768 dimensions; reopened SQLite; fixed TTL clock.",
+    "All cache reviews are explicit and bound to exact fixture texts. Ineligible cases remain in overall cache counts.",
+    "Warm seed generation/storage metrics are separate from repeated lookup/fallback workload metrics.",
+    "Misses generate but are not saved, preserving the same candidate set across threshold comparisons.",
+    "Avoided generation includes unsafe false hits; safe reuse is reported separately. No monetary savings baseline is claimed.",
+    "Cost is estimated from the unchanged pricing file and synthetic usage; missing usage or prices make totals incomplete.",
+    "Average cost per query divides by all scenario queries, including cache hits. By-model averages use the same denominator.",
+    "Threshold experiments and the routing experiment are separate workloads and must not be added as one production total.",
+    "Fixture label agreement is a regression check, not independent classification accuracy or factual verification.",
+    "Empty workloads have zero requests/totals and undefined rates; unknown fields on actual requests remain null.",
+    "Only timing fields vary between repeated runs; wall-clock timestamps and random cache IDs are not exported."
+  ]
+}

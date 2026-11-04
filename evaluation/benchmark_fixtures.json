@@ -1,0 +1,606 @@
+{
+  "schema_version": 1,
+  "source": "Reviewed synthetic benchmark fixtures v1; not observed Gemini outputs or usage.",
+  "cache_reviews": {
+    "safe_tuple": {
+      "query_a": "What is a Python tuple?",
+      "query_b": "Explain what a tuple is in Python.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "A Python tuple is an immutable sequence of items.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_binary": {
+      "query_a": "Convert decimal 10 to binary.",
+      "query_b": "Write ten in base two.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "1010",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_area": {
+      "query_a": "Find the area of a square with side 4 cm.",
+      "query_b": "Calculate the area of a 4 cm by 4 cm square.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "16 square centimeters.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_sort": {
+      "query_a": "Sort [3, 1, 2] in ascending order.",
+      "query_b": "Order [3, 1, 2] from smallest to largest.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "[1, 2, 3]",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_units": {
+      "query_a": "How many centimeters are in one meter?",
+      "query_b": "Convert 1 meter into centimeters.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "100 centimeters.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_leap": {
+      "query_a": "Was 2024 a leap year in the Gregorian calendar?",
+      "query_b": "In the Gregorian calendar, did 2024 have a leap day?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Yes, 2024 was a leap year in the Gregorian calendar.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_fiction": {
+      "query_a": "In the story, Mira owns 3 red books. How many red books does Mira own?",
+      "query_b": "The story says Mira has three red books. State her number of red books.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Mira owns 3 red books in the fictional story.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "safe_even": {
+      "query_a": "Is 8 an even integer?",
+      "query_b": "Is the integer eight divisible by two without a remainder?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Yes, 8 is an even integer.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "negation_include": {
+      "query_a": "List the integers from 1 to 5 that are divisible by 2.",
+      "query_b": "List the integers from 1 to 5 that are not divisible by 2.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "2 and 4.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "negation_mutable": {
+      "query_a": "Is a Python list mutable?",
+      "query_b": "Is a Python list immutable?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Yes, a Python list is mutable.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "number_add": {
+      "query_a": "What is 12 plus 7?",
+      "query_b": "What is 12 plus 8?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "19",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "number_units": {
+      "query_a": "Convert 2 kilometers to meters.",
+      "query_b": "Convert 3 kilometers to meters.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "2000 meters.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "year_leap": {
+      "query_a": "Was 2020 a leap year in the Gregorian calendar?",
+      "query_b": "Was 2021 a leap year in the Gregorian calendar?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Yes, 2020 was a leap year in the Gregorian calendar.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "date_days": {
+      "query_a": "How many days are in February 2024?",
+      "query_b": "How many days are in February 2023?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "29 days.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "entity_capital": {
+      "query_a": "What is the capital of France?",
+      "query_b": "What is the capital of Germany?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": false,
+        "external_state_independent": false
+      },
+      "response": "Paris.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Denied: present-day capital names depend on external state. Keep this pair in the similarity-only diagnostic."
+    },
+    "entity_story": {
+      "query_a": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Ana have?",
+      "query_b": "In a fictional story, Ana has 2 coins and Bo has 5. How many coins does Bo have?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "Ana has 2 coins in the fictional story.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "operation_math": {
+      "query_a": "What is 9 multiplied by 3?",
+      "query_b": "What is 9 divided by 3?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "27",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "operation_order": {
+      "query_a": "Sort [4, 2, 1] in ascending order.",
+      "query_b": "Sort [4, 2, 1] in descending order.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "[1, 2, 4]",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "condition_bounds": {
+      "query_a": "List integers x such that 0 <= x < 3.",
+      "query_b": "List integers x such that 0 < x <= 3.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "0, 1, 2.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "condition_unique": {
+      "query_a": "Count all elements in [1, 1, 2].",
+      "query_b": "Count distinct elements in [1, 1, 2].",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "3 elements.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "unrelated_tuple": {
+      "query_a": "Define a Python dictionary.",
+      "query_b": "How many sides does a triangle have?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "A Python dictionary maps keys to values.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    },
+    "unrelated_units": {
+      "query_a": "Convert one hour to minutes.",
+      "query_b": "Describe the role of a leaf in photosynthesis.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "response": "60 minutes.",
+      "response_flags": {
+        "successful": true,
+        "not_safety_refusal": true,
+        "non_sensitive": true
+      },
+      "reason": "Reviewed fixed educational or fully specified fictional queries; no personal data or external state is needed."
+    }
+  },
+  "routing_cases": [
+    {
+      "id": "simple_pass",
+      "query": "What is a Python tuple?",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "A Python tuple is an immutable sequence of items.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "pass"
+        },
+        "large": {
+          "text": "A Python tuple is an immutable sequence of items.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "pass"
+        }
+      }
+    },
+    {
+      "id": "escalation_pass",
+      "query": "What is the capital of France?",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "I don't know the capital of France.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "Paris.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "pass"
+        }
+      }
+    },
+    {
+      "id": "both_fail_second_better",
+      "query": "Define recursion.",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "Ocean waves carry energy across water.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        }
+      }
+    },
+    {
+      "id": "both_fail_tie",
+      "query": "Calculate 2 + 2.",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        }
+      }
+    },
+    {
+      "id": "both_fail_initial_better",
+      "query": "What is a tuple?",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "Ocean waves carry energy across water.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        }
+      }
+    },
+    {
+      "id": "complex_pass",
+      "query": "Write a Python function to add two numbers.",
+      "expected_classification": "complex",
+      "responses": {
+        "small": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "def add(a, b):\n    return a + b",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "pass"
+        }
+      }
+    },
+    {
+      "id": "complex_fail",
+      "query": "Prove that the square root of 2 is irrational.",
+      "expected_classification": "complex",
+      "responses": {
+        "small": {
+          "text": "TODO",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        },
+        "large": {
+          "text": "I don't know.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "fail"
+        }
+      }
+    },
+    {
+      "id": "missing_usage",
+      "query": "How many sides does a triangle have?",
+      "expected_classification": "simple",
+      "responses": {
+        "small": {
+          "text": "Three.",
+          "usage": null,
+          "expected_quality": "pass"
+        },
+        "large": {
+          "text": "Three.",
+          "usage": {
+            "prompt_token_count": 100,
+            "candidates_token_count": 20,
+            "thoughts_token_count": 5,
+            "total_token_count": 125
+          },
+          "expected_quality": "pass"
+        }
+      }
+    }
+  ],
+  "cache_generation_usage": {
+    "prompt_token_count": 100,
+    "candidates_token_count": 20,
+    "thoughts_token_count": 5,
+    "total_token_count": 125
+  },
+  "cache_miss_text": "Synthetic uncached answer.",
+  "embedding_token_count": null,
+  "notes": [
+    "Token counts are explicit mock SDK fixtures, never inferred from text.",
+    "Expected quality labels describe these test examples; they are not an independent factual-quality dataset.",
+    "Embedding statistics are unavailable in the existing vector fixtures and remain null."
+  ]
+}

@@ -19,6 +19,7 @@ Repeated questions can incur repeated generation costs, while different question
 - A reusable Gemini model layer with explicit small/large roles, environment-configurable model IDs, structured responses, and shared instrumentation.
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
+- Reproducible offline cache, routing, and escalation benchmarks with JSON reports, explicit incomplete costs, and measured local mock-call timings.
 
 ## Architecture
 
@@ -55,6 +56,8 @@ Python 3.14.5 is the version verified in the local virtual environment. The pinn
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── benchmarks.py              # Offline experiments and JSON/human summaries
+├── benchmark_report.json       # Sample synthetic run; timings vary by machine
 ├── escalation.py              # One quality-based escalation and attempt totals
 ├── answer_evaluator.py         # Independent heuristic answer-quality assessment
 ├── evaluation_config.py        # Quality weights, threshold, and acceptance rules
@@ -68,7 +71,7 @@ llm-cost-router/
 ├── embeddings.py               # Gemini query embeddings and normalization
 ├── semantic_similarity.py      # In-memory cosine search
 ├── evaluate_similarity.py      # Offline pairwise evaluation runner
-├── evaluation/                 # Labeled pairs and synthetic vector fixtures
+├── evaluation/                 # Labeled pairs, vectors, and benchmark_fixtures.json
 ├── cache_schema.py             # SQLite schema and transactional migration
 ├── cache_config.py             # Validated semantic threshold defaults
 ├── semantic_cache.py           # Persistent SQLite cache and eligibility
@@ -770,8 +773,121 @@ overrides, duplicate model IDs, metadata preservation, complete and unavailable
 totals, configuration, deterministic decisions, and generation/evaluation failures.
 No live model behavior or factual answer quality is validated.
 
+
+## Offline routing and cache benchmarks
+
+`benchmarks.py` runs real SQLite cache lookups, the existing similarity evaluator,
+classifier/router, answer evaluator, escalation pipeline, and request instrumentation.
+A fixture-only SDK adapter supplies every embedding and answer; no real Gemini
+client is created, no credentials are loaded, and no network calls are made.
+
+```powershell
+# JSON goes to stdout; a compact human summary goes to stderr.
+.\.venv\Scripts\python.exe -m benchmarks --thresholds 0.8 0.9 0.95 --lookup-repeats 2
+
+# Save a new report. Existing files are never overwritten.
+.\.venv\Scripts\python.exe -m benchmarks --output benchmark-run.json
+
+.\.venv\Scripts\python.exe -m pytest tests/test_benchmarks.py -q
+.\.venv\Scripts\python.exe -m pytest tests -q
+```
+
+The sample `benchmark_report.json` contains an actual offline run.
+`BenchmarkConfig` also accepts model, routing, and evaluation configurations.
+It does not change application defaults or load model environment variables.
+Thresholds must be distinct finite numbers in `[-1, 1]`; repeats must be a
+positive integer. This benchmark requires distinct small/large model IDs so
+each role has an unambiguous response fixture.
+
+Inputs default to `evaluation/query_pairs.json`,
+`evaluation/synthetic_embeddings.json`, `evaluation/benchmark_fixtures.json`,
+and the existing `model_pricing.json`. Override them with `--dataset`,
+`--embeddings`, `--fixtures`, and `--pricing`. Reports include input and source-code
+SHA-256 fingerprints, runtime versions, configuration snapshots, and measurement
+notes. Repeated runs produce identical non-timing metrics for unchanged inputs
+and code. Empty datasets produce zero requests and undefined rates (`null`).
+
+### Experiments and metric definitions
+
+**Cache:** each of the 22 labeled pairs has an isolated namespace with at most
+one reviewed candidate. The existing 2D synthetic vectors are padded with zeros
+to 768 dimensions and normalized by `EmbeddingGenerator`. Padding preserves
+cosine similarity; it does not make the vectors Gemini embeddings. The cache
+generates and saves an approved seed answer, closes, reopens, and looks up the
+paired query repeatedly. Hits skip generation; misses call the mock small model
+but are not saved, keeping the candidate set fixed across thresholds.
+
+`benchmark_fixtures.json` contains explicit eligibility flags bound to the exact
+query texts and seed responses. Present-day capital questions are denied caching
+because they depend on external state. Other fixtures are reviewed fixed
+educational or self-contained fictional examples. This is not an automatic
+eligibility policy. Reports include all-pair and eligible-only cache metrics,
+plus the existing similarity-only evaluation of all pairs.
+
+| Metric | Definition |
+| --- | --- |
+| True hit / false miss | SAFE_MATCH pair accepted / rejected |
+| False hit / true miss | MUST_NOT_MATCH pair accepted / rejected |
+| Hit / miss rate | Hits / misses divided by all pair lookups |
+| False-hit rate | FP / (FP + TN) |
+| False-miss rate | FN / (TP + FN) |
+| Precision / recall | TP / (TP + FP), TP / (TP + FN) |
+| Avoided generation | Actual lookup hits that skipped a mock generation call |
+| Safe / unsafe reuse | Avoided calls split by the expected pair label |
+
+Confusion counts use one decision per pair; reuse counts include all configured
+repeats. Avoided calls include false hits and therefore **do not imply safe
+reuse or cost savings**. At threshold `0.9`, the supplied cache fixtures produce
+6 true hits, 6 false hits, 8 true misses, and 2 false misses. Two repeats yield
+24 avoided calls: 12 safe reuses and 12 unsafe reuses. The similarity-only result
+has one additional false hit because it does not apply cache eligibility.
+
+**Routing and escalation:** eight separate scripted queries run through
+`EscalationPipeline`. Reports retain classifier signals, original routing decisions,
+attempt roles, quality scores/reasons, and selected answers. Initial model
+distribution is separate from the distribution of all attempts after escalation.
+The default fixtures produce 6 simple and 2 complex queries, 4 escalations,
+1 passing escalated answer, 3 cases where both answers fail, and 12 total attempts.
+Escalation success is passing large answers divided by triggered escalations;
+initial acceptance is counted separately. Fixture-label agreement checks expected
+heuristic behavior; it is not independently measured factual quality.
+
+### Costs, latency, and limits
+
+Each cache threshold is a separate experiment. Seed generation/storage appears
+under `setup_metrics`; repeated lookup/fallback work under `request_metrics`,
+with separate `generation_metrics` and `embedding_metrics`. The routing experiment
+has its own request totals and per-model breakdown. Do not add alternative
+threshold experiments together as one production workload.
+
+Costs reuse instrumented estimates with the existing price file and explicit
+synthetic SDK token fixtures. No usage is inferred from text. Embedding usage
+is unavailable in the supplied vectors, one generation fixture omits usage,
+and the default large model has no configured rate. Accordingly, total costs
+remain `null` when incomplete; `known_cost_subtotal_usd` is clearly marked as
+partial. Counts and statuses identify missing estimates. Per-field token totals
+also remain `null` if any request lacks that field. Reported zero stays zero.
+Average costs use all workload queries, including hits, as the denominator.
+An empty workload has known zero consumption; undefined averages remain `null`.
+
+Lookup latency is directly measured local time for mocked embedding, normalization,
+SQLite, and similarity search, excluding answer generation. Generation latency
+is directly measured execution time of the local mock SDK, with per-request and
+per-query averages. Neither is simulated network latency or a Gemini performance
+measurement. Full routing/evaluation time is not reported as generation latency.
+
+These small fixtures test behavior and accounting, not production performance.
+The cache benchmark has one candidate per namespace, no growing corpus,
+concurrency, eviction, or expiry load. It does not establish a best real-world
+threshold. Model output, usage, and quality are synthetic; generation errors and
+API retry/load behavior are not benchmarked. Default pipeline total cost and
+token totals are unknown; the known cost subtotal is `$0.0003125` across five
+priced mock attempts. No actual API spending, factual quality, or production
+cost reduction is claimed. CLI and cache/routing application integration remain
+separate from this benchmark-only orchestration.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, and standalone escalation pipeline are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, and offline component benchmarks are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

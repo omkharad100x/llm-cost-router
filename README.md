@@ -13,6 +13,7 @@ Repeated questions can incur repeated generation costs, while different question
 - `gemini-embedding-001` query embeddings with 768 dimensions and unit length NumPy normalization. Embedding requests use the same instrumentation.
 - NumPy cosine similarity search with a configurable inclusive threshold (default `0.9`).
 - A standalone SQLite semantic cache with TTL, namespace and embedding version scoping, duplicate protection, expiration cleanup, and explicit query and response eligibility.
+- Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
 
 ## Architecture
@@ -30,6 +31,7 @@ flowchart LR
     Embed --> Gen
     Cache --> Similarity["NumPy cosine similarity"]
     Cache --> DB["Local SQLite database"]
+    Future -. "future routing input" .-> Classifier["Query complexity classifier"]
     Future --> Gen
 ```
 
@@ -46,6 +48,8 @@ llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
 ├── instrumentation.py          # SDK call timing, usage, pricing, JSONL records
 ├── model_pricing.json          # Configurable per-model USD rates
+├── query_complexity.py         # Independent deterministic complexity classifier
+├── complexity_config.py        # Validated classifier thresholds and weights
 ├── embeddings.py               # Gemini query embeddings and normalization
 ├── semantic_similarity.py      # In-memory cosine search
 ├── evaluate_similarity.py      # Offline pairwise evaluation runner
@@ -285,8 +289,91 @@ cache safety requirements continue to apply.
 
 `EmbeddingGenerator` requests `gemini-embedding-001` with the `SEMANTIC_SIMILARITY` task and 768 output dimensions, then normalizes the vector for cosine search. Embedding token usage comes from SDK embedding statistics when supplied. If statistics are absent, token count and estimated embedding cost remain unavailable; the code does not guess tokens from text length.
 
+## Query complexity classification
+
+`query_complexity.classify_query` independently classifies a query as `simple`
+or `complex` using deterministic English rules and the Python standard library.
+It returns an immutable `ComplexityResult` with `label`, integer `score`,
+weighted `signals`, `reasons`, `word_count`, and approximate `instruction_count`.
+The module does not read configuration files, secrets, or memory.
+
+```python
+from complexity_config import ComplexityConfig
+from query_complexity import classify_query
+
+result = classify_query("Write a Python function to merge two sorted lists.")
+print(result.label, result.score, result.reasons)  # complex, 3, coding reason
+
+config = ComplexityConfig(complex_threshold=4, long_query_words=160)
+result = classify_query("Prove this statement.", config=config)  # simple at score 3
+```
+
+Each detected rule contributes once, in a fixed order. The label is `complex`
+when the score is at least `complex_threshold` (default `3`).
+
+| Signal | Default weight | Detection |
+| --- | --- | --- |
+| Length | 1 | At least 120 words |
+| Multiple tasks | 3 | At least two distinct instruction-like clauses |
+| Multi-step work | 3 | Step-by-step request, or first followed by then |
+| Reasoning | 3 | Proof, derivation, justification, or explicit reasoning cues |
+| Coding | 3 | Code generation, debugging, or refactoring request patterns |
+| Advanced math | 3 | Symbolic, probabilistic, or other advanced math request patterns |
+| Analysis | 3 | Analysis/comparison/optimization action with a relevant subject |
+| Explanation | 1 | Detailed explanation, examples, explain why/how |
+| Context | 1 | Explicit supplied-context/constraint phrases or fenced code |
+
+Length alone remains below the default complex threshold. Basic arithmetic,
+definitions, and straightforward translation can remain simple. Task counting
+splits on sentence/list boundaries and connectors, then counts unique clauses
+starting with a recognized instruction or question cue.
+
+`ComplexityConfig` validates positive integer thresholds, a task minimum of at
+least two, and an immutable tuple of weights defining every supported signal.
+Weights are nonnegative integers; zero disables a signal's contribution.
+Use `dataclasses.replace` and a new tuple to customize weights:
+
+```python
+from dataclasses import replace
+from complexity_config import DEFAULT_COMPLEXITY_CONFIG
+
+config = replace(
+    DEFAULT_COMPLEXITY_CONFIG,
+    weights=tuple(
+        (name, 4 if name == "coding" else weight)
+        for name, weight in DEFAULT_COMPLEXITY_CONFIG.weights
+    ),
+)
+```
+
+Empty, non-string, or punctuation-only queries and invalid configurations raise
+`ValueError`. No confidence probability is reported: the score is heuristic
+evidence, without calibration against a labeled complexity dataset.
+
+Examples with default settings:
+
+| Query | Label |
+| --- | --- |
+| What is the capital of France? | simple |
+| Calculate 2 + 2. | simple |
+| First calculate the total, then explain the result. | complex |
+| Write a Python function to merge two sorted lists. | complex |
+| Calculate the probability of exactly two heads in five tosses. | complex |
+
+The classifier is ready to be called by a future pipeline, but is not connected
+to the CLI, cache, or Gemini model selection. Complexity does not establish
+cache eligibility or answer quality. Rules are English phrase heuristics:
+unusual wording, negation, quoted instructions, code content, and implicit
+reasoning can cause incorrect classifications. Instruction counts approximate
+structure rather than understanding distinct tasks. Rule weights and thresholds
+need calibration before using them for routing decisions.
+
+The complete offline suite includes `tests/test_query_complexity.py`, covering
+simple and complex requests, long straightforward queries, configuration, exact
+boundaries, determinism, and execution with network connections disabled.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, and standalone cache are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, and query complexity classifier are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

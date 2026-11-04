@@ -13,6 +13,7 @@ Repeated questions can incur repeated generation costs, while different question
 - `gemini-embedding-001` query embeddings with 768 dimensions and unit length NumPy normalization. Embedding requests use the same instrumentation.
 - NumPy cosine similarity search with a configurable inclusive threshold (default `0.9`).
 - A standalone SQLite semantic cache with TTL, namespace and embedding version scoping, duplicate protection, expiration cleanup, and explicit query and response eligibility.
+- Independent deterministic answer-quality checks with weighted criteria, configurable acceptance, and explicit factual-verification limits.
 - A standalone complexity-first router: simple queries use the small role and complex queries use the large role, with explicit cost availability and routing reasons.
 - A reusable Gemini model layer with explicit small/large roles, environment-configurable model IDs, structured responses, and shared instrumentation.
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
@@ -50,6 +51,8 @@ Python 3.14.5 is the version verified in the local virtual environment. The pinn
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── answer_evaluator.py         # Independent heuristic answer-quality assessment
+├── evaluation_config.py        # Quality weights, threshold, and acceptance rules
 ├── model_router.py             # Complexity-first routing and decision metadata
 ├── gemini_models.py            # Explicit small/large calls and structured responses
 ├── model_config.py             # Model-name environment configuration
@@ -559,11 +562,97 @@ no retries or fallback; any retries already configured inside the SDK still appl
 Routing decisions are deterministic for the same query, classifier settings,
 role mapping, and pricing state. Generated content and request timing need not
 be deterministic. Classification remains heuristic and uncalibrated, so incorrect
-labels can select an unsuitable role. Cache eligibility, answer quality,
-escalation, and integration into the existing CLI remain future work.
+labels can select an unsuitable role. An independent answer evaluator is available;
+connecting it to routing and escalation remains future work, as do cache eligibility
+integration and integration into the existing CLI.
+
+## Independent answer-quality evaluation
+
+`answer_evaluator.evaluate_answer(query, answer)` assesses text using deterministic
+English heuristics. It uses only the standard library, reads no environment or
+secrets, makes no API calls, and does not invoke models, routing, or caching.
+Task 8 can consume its result to implement escalation separately.
+
+```python
+from answer_evaluator import evaluate_answer
+from evaluation_config import EvaluationConfig
+
+result = evaluate_answer("What is the capital of France?", "Paris.")
+print(result.decision, result.score)  # pass, 0.85
+print(result.criteria, result.reasons)
+
+strict = evaluate_answer(
+    "What is the capital of France?", "Paris.",
+    config=EvaluationConfig(acceptance_threshold=0.9),
+)  # fail: 0.85 is below 0.9
+```
+
+The immutable `EvaluationResult` contains `score`, `decision`, individual
+`CriterionScore` objects, `reasons`, `acceptance_threshold`, `blockers`, the
+configuration snapshot, `evaluator_version`, and
+`factual_correctness_verified=False`. It retains no query or answer text and no
+wall-clock timestamp, so identical inputs and configuration give identical results.
+
+| Criterion | Weight | Evidence |
+| --- | --- | --- |
+| Presence | 20 | Words/numbers rather than empty text or known placeholders |
+| Relevance | 30 | Shared content terms after removing common English words |
+| Completeness | 25 | Explicit list counts, recognizable code, valid requested JSON, unfinished endings |
+| Structure | 10 | Closed code fences, paragraph size, excessive repeated sentences |
+| Certainty | 10 | Absence of recognized uncertainty or inability phrases |
+| Error-free | 5 | Absence of recognized leading generation/failure messages |
+
+Each criterion scores between 0 and 1. Overall score is the weighted mean,
+rounded to six decimal places. **Pass requires a score at least the configured
+threshold (default 0.8) and no acceptance blockers.** Empty or placeholder-only
+answers always fail, including with a zero threshold. Detected uncertainty,
+leading failure messages, and unmet supported completeness checks block acceptance
+by default. Set `fail_on_uncertainty`, `fail_on_error`, or `fail_on_incomplete`
+to `False` to remove the corresponding blocker; its score penalty still applies.
+
+Short factual-style replies of at most three words receive relevance 0.5 when
+there is no lexical overlap. This explicitly represents uncertain relevance and
+allows terse replies such as "Paris." or "4" without a minimum answer length.
+Other replies without shared content terms receive relevance 0. A long answer
+earns no length bonus.
+
+Completeness detects a limited set of requests: numbered quantities following
+list/give/provide/name (one through ten or numeric 1–99), requests to write or
+generate code, and requests to return/respond/output JSON. It counts distinct
+bulleted, numbered, comma/semicolon-separated, or line-separated list items.
+Code is recognized by formatting or syntax cues; it is never executed.
+JSON is parsed for syntax only. Other tasks receive no completeness penalty
+unless an unfinished ending or TODO/TBD marker is detected. This does not prove
+semantic task coverage.
+
+`EvaluationConfig` also controls `short_answer_max_words`,
+`max_paragraph_chars` (default 1200), and immutable integer criterion weights.
+Use `dataclasses.replace` to customize the configuration, as with classifier
+configuration. Thresholds must be finite numbers in `[0, 1]`; weights must be
+nonnegative integers with a positive total. Missing/unknown/duplicate criteria,
+invalid booleans, and invalid limits raise `ValueError`. A zero-weight criterion
+can still trigger its separately configured acceptance blocker.
+
+An empty string answer is valid evaluation input that fails evaluation. A
+non-string answer (including `None`), invalid configuration, or a query with no
+words/numbers raises `ValueError`.
+
+**A pass is not factual verification, semantic equivalence, or a confidence
+probability.** Incorrect short answers can pass, synonyms can fail lexical
+relevance, keyword repetition can appear related, and quoted/negated uncertainty
+can trigger penalties. Honest qualifications and appropriate safety refusals can
+fail this adequacy check; a later escalation policy must not interpret that as
+permission to bypass a refusal. Code validity, reasoning correctness, factual
+claims, arbitrary multi-task coverage, and safety are not established. Calibrate
+the rules against reviewed examples before making automatic acceptance decisions.
+
+Offline tests in `tests/test_answer_evaluator.py` cover the criteria, configurable
+blockers, short and long answers, invalid inputs, exact threshold boundaries,
+determinism, and execution with network access disabled. Existing routing
+behavior remains independent of these results.
 
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, and complexity-first router are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, and independent answer evaluator are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

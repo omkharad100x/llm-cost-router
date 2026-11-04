@@ -73,7 +73,7 @@ def test_database_initialization_and_empty_miss(setup):
     assert result.response is result.matched_query is result.similarity_score is result.entry_id is None
     embedder.embed_query.assert_called_once()
     with sqlite3.connect(path) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
 
 
 def test_exact_hit_and_schema_storage(setup):

@@ -50,6 +50,7 @@ llm-cost-router/
 ├── semantic_similarity.py      # In-memory cosine search
 ├── evaluate_similarity.py      # Offline pairwise evaluation runner
 ├── evaluation/                 # Labeled pairs and synthetic vector fixtures
+├── cache_schema.py             # SQLite schema and transactional migration
 ├── cache_config.py             # Validated semantic threshold defaults
 ├── semantic_cache.py           # Persistent SQLite cache and eligibility
 ├── requirements.txt            # Pinned runtime dependencies
@@ -139,7 +140,89 @@ Omit the argument to use the default. Zero and negative thresholds are valid
 and are never treated as missing. A score equal to the threshold is accepted;
 lower thresholds admit more matches and require careful quality evaluation.
 Overrides do not change eligibility requirements, stored entries, or TTLs.
-Configuration is supplied in Python and is not persisted in SQLite.
+Threshold configuration is supplied in Python and is not persisted in SQLite.
+
+## Cache versioning, migration, and invalidation
+
+There are two independent versions:
+
+- **SQLite schema version 2** (`PRAGMA user_version`) describes the database layout.
+- **Application cache version** (`CacheConfig(cache_version="v1")`) describes answer
+  compatibility. Bump it when prompt, answer-generation, or application policy
+  changes make existing answers unsuitable.
+
+The schema adds `cache_version` and `embedding_config` to each entry and to its
+uniqueness constraint. Compatibility includes namespace, embedding model,
+caller-assigned embedding version, task type, dimensions, storage dtype,
+eligibility version, application cache version, and canonical JSON metadata for
+normalization and preprocessing. Task and preprocessing/normalization identifiers
+come from `embeddings.py`. Threshold and TTL do not change embedding compatibility.
+
+```python
+from cache_config import CacheConfig
+from semantic_cache import SemanticCache
+
+# Supply the existing EmbeddingGenerator instance.
+with SemanticCache(
+    "semantic_cache.sqlite3", embedder,
+    namespace="public-faq", config=CacheConfig(cache_version="v2"),
+    embedding_version="v1",
+) as cache:
+    result = cache.lookup(query, eligibility=query_review)
+    # Selectors are examples: invoke only the invalidation you intend.
+    removed = cache.invalidate(entry_id=entry_id)
+    removed = cache.invalidate(namespace="retired-faq")
+    removed = cache.invalidate(
+        embedding_model="gemini-embedding-001", embedding_version="v1",
+    )
+    removed = cache.invalidate(cache_version="v1")
+    expired = cache.remove_expired()
+```
+
+An explicit constructor `cache_version="v2"` overrides the configuration object's
+version. Versions must be nonempty strings. Changing versions excludes old entries
+without deleting them; identical queries may coexist in different versions.
+Existing instances retain their configured version. This is per-instance
+compatibility scoping, not a database-wide switch. Use explicit invalidation to
+remove retired entries, including those visible to older instances.
+
+`invalidate()` deletes matching rows and returns their count. Selectors combine
+with AND. Entry ID, embedding model/version, and cache version filters default to
+the instance's namespace; an explicit namespace targets that namespace instead.
+At least one selector is required. `clear()` still clears the current namespace
+across all versions, and `remove_expired()` removes entries whose expiry is at or
+before the current time, across versions in that namespace. Other namespaces
+are preserved. SQL values are parameterized.
+
+Lookup re-reads the selected row after similarity search and returns an
+`invalidated` miss if it was removed or changed. The final read defines the
+concurrent lookup's observation point: an invalidation completed before that
+read is honored. A deletion after that read cannot revoke a response already
+being returned. Invalidation removes existing rows; it does not install a
+permanent ban or cancel in-flight saves. A newly reviewed response can be saved
+again later.
+
+### Migration and compatibility
+
+On opening a recognized schema version 1 database, the cache migrates it
+automatically inside one `BEGIN IMMEDIATE` transaction. The table is rebuilt to
+extend its uniqueness constraint; every original field, ID, vector byte, namespace,
+and timestamp is copied, including expired entries. Legacy entries receive
+application version `v1` and the frozen original embedding configuration, even
+when the opener requests a newer application version. A failure rolls back the
+table rebuild and schema version together.
+
+Back up an existing database before upgrading, and close older application
+processes during migration. Unknown schema versions, unrecognized version 1 table
+definitions, and customized version 1 databases with extra tables, indexes, views,
+or triggers are refused for manual migration. They are not reset. This migration
+does not support downgrade; older code rejects schema version 2.
+
+The current embedding module still uses `gemini-embedding-001`, 768 dimensions,
+and `SEMANTIC_SIMILARITY`. `embedding_version` is an application-maintained
+compatibility marker, not an automatically discovered Google model revision.
+Custom injected embedders must honor that contract. Stored vectors cannot prove
+which model produced them. Namespace scoping is not authentication.
 
 ## Near-miss and false-hit evaluation
 
@@ -206,4 +289,4 @@ cache safety requirements continue to apply.
 
 The CLI, instrumentation, embeddings, similarity search, and standalone cache are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
-Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index, size based eviction, or schema migration. The CLI's JSONL recorder is intended for local single process use.
+Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

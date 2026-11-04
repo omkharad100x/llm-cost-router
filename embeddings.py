@@ -9,6 +9,9 @@ from google.genai import types
 
 MODEL = "gemini-embedding-001"
 DIMENSIONS = 768
+TASK_TYPE = "SEMANTIC_SIMILARITY"
+NORMALIZATION_VERSION = "scaled-l2-float64-v1"
+PREPROCESSING_VERSION = "strip-v1"
 
 
 class EmbeddingResponseError(ValueError):
@@ -34,7 +37,7 @@ class EmbeddingGenerator:
             model=MODEL,
             contents=text.strip(),
             config=types.EmbedContentConfig(
-                task_type="SEMANTIC_SIMILARITY",
+                task_type=TASK_TYPE,
                 output_dimensionality=DIMENSIONS,
             ),
         )

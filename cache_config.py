@@ -20,9 +20,12 @@ class CacheConfig:
     """Application defaults; pass a custom instance to SemanticCache."""
 
     similarity_threshold: float = 0.9
+    cache_version: str = "v1"
 
     def __post_init__(self):
         validate_threshold(self.similarity_threshold)
+        if not isinstance(self.cache_version, str) or not self.cache_version.strip():
+            raise ValueError("Cache version must be a nonempty string.")
 
 
 DEFAULT_CONFIG = CacheConfig()

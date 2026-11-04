@@ -5,6 +5,7 @@ loads secrets, or imports the CLI. Eligibility is a trusted caller decision.
 """
 
 from dataclasses import dataclass
+import json
 import math
 from numbers import Real
 import sqlite3
@@ -14,43 +15,22 @@ import uuid
 import numpy as np
 
 from cache_config import CacheConfig, DEFAULT_CONFIG, _UNSET, validate_threshold
-from embeddings import DIMENSIONS, MODEL
+from cache_schema import SCHEMA_VERSION, SCHEMA, create_expiration_index, migrate_v1
+from embeddings import (
+    DIMENSIONS, MODEL, TASK_TYPE, NORMALIZATION_VERSION, PREPROCESSING_VERSION,
+)
 from semantic_similarity import find_most_similar
 
 
-SCHEMA_VERSION = 1
-TASK_TYPE = "SEMANTIC_SIMILARITY"
 VECTOR_DTYPE = "<f4"
 ELIGIBILITY_VERSION = "explicit-review-v1"
-
-SCHEMA = """
-CREATE TABLE cache_entries (
-    id TEXT PRIMARY KEY NOT NULL,
-    namespace TEXT NOT NULL,
-    query_key TEXT NOT NULL,
-    original_query TEXT NOT NULL,
-    cached_response TEXT NOT NULL,
-    response_model TEXT NOT NULL,
-    embedding BLOB NOT NULL,
-    embedding_model TEXT NOT NULL,
-    embedding_version TEXT NOT NULL,
-    embedding_task TEXT NOT NULL,
-    embedding_dimensions INTEGER NOT NULL,
-    embedding_dtype TEXT NOT NULL,
-    eligibility_version TEXT NOT NULL,
-    created_at REAL NOT NULL,
-    expires_at REAL NOT NULL,
-    CHECK (length(trim(query_key)) > 0),
-    CHECK (length(trim(cached_response)) > 0),
-    CHECK (expires_at > created_at),
-    UNIQUE (namespace, query_key, embedding_model, embedding_version,
-            embedding_task, embedding_dimensions, embedding_dtype,
-            eligibility_version)
-)
-"""
+EMBEDDING_CONFIG = json.dumps({
+    "normalization": NORMALIZATION_VERSION,
+    "preprocessing": PREPROCESSING_VERSION,
+}, sort_keys=True, separators=(",", ":"))
 SCOPE = """namespace = ? AND embedding_model = ? AND embedding_version = ?
 AND embedding_task = ? AND embedding_dimensions = ? AND embedding_dtype = ?
-AND eligibility_version = ?"""
+AND eligibility_version = ? AND cache_version = ? AND embedding_config = ?"""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -140,7 +120,7 @@ class SemanticCache:
 
     def __init__(
         self, path, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
-        namespace="default", embedding_version="v1", clock=time.time,
+        namespace="default", embedding_version="v1", cache_version=_UNSET, clock=time.time,
     ):
         if not isinstance(config, CacheConfig):
             raise ValueError("config must be a CacheConfig instance.")
@@ -149,6 +129,10 @@ class SemanticCache:
         )
         if not _nonempty(namespace) or not _nonempty(embedding_version):
             raise ValueError("Namespace and embedding version must be nonempty.")
+        cache_version = config.cache_version if cache_version is _UNSET else cache_version
+        if not _nonempty(cache_version):
+            raise ValueError("Cache version must be a nonempty string.")
+        self.cache_version = cache_version
         self.threshold = threshold
         self.ttl_seconds = _positive_seconds(ttl_seconds)
         self.namespace = namespace
@@ -156,7 +140,7 @@ class SemanticCache:
         self.clock = clock
         self._scope = (
             namespace, MODEL, embedding_version, TASK_TYPE, DIMENSIONS,
-            VECTOR_DTYPE, ELIGIBILITY_VERSION,
+            VECTOR_DTYPE, ELIGIBILITY_VERSION, cache_version, EMBEDDING_CONFIG,
         )
         self._connection = None
         try:
@@ -173,10 +157,10 @@ class SemanticCache:
                     if tables:
                         raise CacheError("Refusing to initialize an unrelated database.")
                     self._connection.execute(SCHEMA)
-                    self._connection.execute(
-                        "CREATE INDEX cache_expiration ON cache_entries(namespace, expires_at)"
-                    )
-                    self._connection.execute("PRAGMA user_version = 1")
+                    create_expiration_index(self._connection)
+                    self._connection.execute("PRAGMA user_version = 2")
+                elif version == 1:
+                    migrate_v1(self._connection)
                 elif version != SCHEMA_VERSION:
                     raise CacheError("Unsupported cache schema version.")
                 # Ensure an existing database has the expected table/columns.
@@ -185,7 +169,7 @@ class SemanticCache:
                     "embedding, created_at, expires_at FROM cache_entries WHERE " + SCOPE
                     + " LIMIT 0", self._scope,
                 )
-        except (sqlite3.Error, CacheError):
+        except (sqlite3.Error, CacheError, ValueError):
             self.close()
             raise CacheError("Cache database initialization failed.") from None
 
@@ -265,6 +249,17 @@ class SemanticCache:
         if match is None:
             return CacheLookup(hit=False)
         row = entries[match.query]
+        # Re-read after similarity search: another connection may have invalidated
+        # or replaced this entry after the initial candidate snapshot.
+        try:
+            current = self._db().execute(
+                "SELECT * FROM cache_entries WHERE id = ? AND " + SCOPE,
+                (row["id"], *self._scope),
+            ).fetchone()
+        except sqlite3.Error:
+            raise CacheError("Cache lookup failed.") from None
+        if current is None or current != row:
+            return CacheLookup(hit=False, reason="invalidated")
         # Do not return an entry that expired during a long local scan.
         if row["expires_at"] <= self._now():
             return CacheLookup(hit=False, reason="expired")
@@ -334,14 +329,45 @@ class SemanticCache:
                         id, namespace, query_key, original_query, cached_response,
                         response_model, embedding, embedding_model, embedding_version,
                         embedding_task, embedding_dimensions, embedding_dtype,
-                        eligibility_version, created_at, expires_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        eligibility_version, cache_version, embedding_config, created_at, expires_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (entry_id, self.namespace, key, query, response, model, blob,
                      *self._scope[1:], now, expires),
                 )
             return entry_id
         except sqlite3.Error:
             raise CacheError("Cache storage failed.") from None
+
+    def invalidate(
+        self, *, entry_id=None, namespace=None, embedding_model=None,
+        embedding_version=None, cache_version=None,
+    ):
+        """Delete matching rows in a namespace; filters combine with AND.
+
+        Without an explicit namespace, use this instance's namespace. At least
+        one selector is required; use clear() for an intentional current-scope wipe.
+        This does not prevent a caller from saving a newly reviewed answer later.
+        """
+        selectors = {
+            "id": entry_id, "namespace": namespace, "embedding_model": embedding_model,
+            "embedding_version": embedding_version, "cache_version": cache_version,
+        }
+        if all(value is None for value in selectors.values()):
+            raise ValueError("Invalidation requires at least one selector.")
+        if any(value is not None and not _nonempty(value) for value in selectors.values()):
+            raise ValueError("Invalidation selectors must be nonempty strings.")
+        selectors["namespace"] = self.namespace if namespace is None else namespace
+        selected = [(column, value) for column, value in selectors.items() if value is not None]
+        where = " AND ".join(column + " = ?" for column, _ in selected)
+        try:
+            with self._db():
+                cursor = self._db().execute(
+                    "DELETE FROM cache_entries WHERE " + where,
+                    tuple(value for _, value in selected),
+                )
+            return cursor.rowcount
+        except sqlite3.Error:
+            raise CacheError("Cache invalidation failed.") from None
 
     def remove_expired(self):
         """Delete expired entries across embedding versions in this namespace."""

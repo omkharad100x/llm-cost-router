@@ -4,7 +4,7 @@ A Python project exploring how to reduce LLM API costs through measured requests
 
 ## Why this project?
 
-Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement and the cache building blocks are implemented; routing, escalation, and a dashboard remain planned work.
+Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, and complexity-first model routing are implemented; quality escalation and a dashboard remain planned work.
 
 ## Implemented features
 
@@ -13,6 +13,7 @@ Repeated questions can incur repeated generation costs, while different question
 - `gemini-embedding-001` query embeddings with 768 dimensions and unit length NumPy normalization. Embedding requests use the same instrumentation.
 - NumPy cosine similarity search with a configurable inclusive threshold (default `0.9`).
 - A standalone SQLite semantic cache with TTL, namespace and embedding version scoping, duplicate protection, expiration cleanup, and explicit query and response eligibility.
+- A standalone complexity-first router: simple queries use the small role and complex queries use the large role, with explicit cost availability and routing reasons.
 - A reusable Gemini model layer with explicit small/large roles, environment-configurable model IDs, structured responses, and shared instrumentation.
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
@@ -32,8 +33,10 @@ flowchart LR
     Embed --> Gen
     Cache --> Similarity["NumPy cosine similarity"]
     Cache --> DB["Local SQLite database"]
-    Future -. "future routing input" .-> Classifier["Query complexity classifier"]
-    Future --> Gen
+    Future -. "future application integration" .-> Router["ModelRouter"]
+    Router --> Classifier["Query complexity classifier"]
+    Router --> Models["GeminiModels: selected role"]
+    Models --> Gen
 ```
 
 The cache creates no answer: a caller must decide whether to use a hit or generate an answer, review that answer, and explicitly approve storage. The integration test exercises this sequence with mocked SDK responses; it is test-only orchestration.
@@ -47,6 +50,7 @@ Python 3.14.5 is the version verified in the local virtual environment. The pinn
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── model_router.py             # Complexity-first routing and decision metadata
 ├── gemini_models.py            # Explicit small/large calls and structured responses
 ├── model_config.py             # Model-name environment configuration
 ├── instrumentation.py          # SDK call timing, usage, pricing, JSONL records
@@ -363,8 +367,8 @@ Examples with default settings:
 | Write a Python function to merge two sorted lists. | complex |
 | Calculate the probability of exactly two heads in five tosses. | complex |
 
-The classifier is ready to be called by a future pipeline, but is not connected
-to the CLI, cache, or Gemini model selection. Complexity does not establish
+The standalone router now uses the classifier to choose a Gemini model role.
+The existing CLI and cache remain independent of this routing flow. Complexity does not establish
 cache eligibility or answer quality. Rules are English phrase heuristics:
 unusual wording, negation, quoted instructions, code content, and implicit
 reasoning can cause incorrect classifications. Instruction counts approximate
@@ -463,8 +467,103 @@ remains necessary before caching. Offline tests use mocked SDK responses and
 synthetic environment values; real model availability, quota, and account
 permissions remain unverified.
 
+## Complexity-first model routing
+
+`ModelRouter` connects the existing classifier to `GeminiModels.generate`.
+The default policy `complexity-v1` maps `simple` to `small` and `complex` to
+`large`. It consumes the classifier's structured label; it does not recalculate
+the score or duplicate classification, generation, or instrumentation logic.
+
+```python
+from model_router import ModelRouter, RoutingError
+
+# models is an existing GeminiModels instance using your instrumented client.
+router = ModelRouter(models)
+try:
+    result = router.generate("What is the capital of France?")
+    print(result.classification.label, result.classification.score)
+    print(result.decision.selected_role, result.decision.reason)
+    print(result.response.text, result.response.model)
+    print(result.response.estimated_cost_usd, result.response.cost_status)
+except RoutingError as error:
+    # Safe message; generation failures also expose error.decision.
+    print(str(error))
+```
+
+With a real client, this example makes a live generation request. Offline
+coverage in `tests/test_model_router.py` uses only mocked SDK calls.
+
+The immutable `RoutedGeneration` nests existing objects rather than copying
+their fields:
+
+- `classification`: the original `ComplexityResult`, including label, score,
+  signals, and reasons.
+- `decision`: selected role, routing reason, policy identifier, pricing status,
+  and `cost_optimized=False`.
+- `response`: the original `ModelResponse`, including concrete configured model
+  ID, generated text, usage, latency, timestamp, cost, and cost status.
+
+The model ID is the ID invoked by the shared layer; provider-resolved model
+revision metadata is not currently exposed. Latency measures the SDK invocation,
+not total classification/routing time. Decisions are recorded in the returned
+result (or attached to a generation error), with no additional persistent log.
+The existing request recorder continues to record each generation attempt once.
+
+### Configuration and cost semantics
+
+```python
+from complexity_config import ComplexityConfig
+from model_router import ModelRouter, RoutingConfig
+
+settings = RoutingConfig(
+    simple_role="small",
+    complex_role="large",
+    complexity=ComplexityConfig(complex_threshold=4),
+)
+router = ModelRouter(models, config=settings)
+```
+
+Both role mappings and classifier settings are configurable and validated.
+Only `small` and `large` roles are accepted; model names still come from the
+existing `ModelConfig` and its environment-variable settings.
+`generation_config` can be passed to `router.generate` for forwarding unchanged
+to the shared model layer.
+
+Routing remains complexity-first, including when prices are unavailable or
+configured rates do not make the small role cheaper. Decision `pricing_status`
+is `configured` when the selected model has a pricing entry, otherwise
+`unavailable`. This indicates configuration presence only; the response's
+`cost_status` describes whether a request estimate was actually obtained.
+Unknown cost remains `None`, never zero. Available decimal-string costs and
+all usage fields pass through unchanged. A reported zero stays zero.
+
+The router performs no price ranking, budget optimization, or quality comparison
+and always records `cost_optimized=False`. The default large model remains
+unpriced in the supplied pricing file. Missing usage or invalid pricing can
+also prevent an estimate even when an entry is present.
+
+| Example | Default classification | Role |
+| --- | --- | --- |
+| What is the capital of France? | simple, score 0 | small |
+| Write a Python function to merge two sorted lists. | complex, score 3 | large |
+
+### Failures and current limits
+
+Classification failures raise sanitized `ClassificationError` before generation.
+Invalid constructor settings raise `ValueError`. Generation or response failures
+raise sanitized `RoutingGenerationError` containing the attempted decision.
+Both operational errors inherit `RoutingError`. Raw exception messages and
+traceback chains are suppressed. The router invokes one selected model and adds
+no retries or fallback; any retries already configured inside the SDK still apply.
+
+Routing decisions are deterministic for the same query, classifier settings,
+role mapping, and pricing state. Generated content and request timing need not
+be deterministic. Classification remains heuristic and uncalibrated, so incorrect
+labels can select an unsuitable role. Cache eligibility, answer quality,
+escalation, and integration into the existing CLI remain future work.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, and shared Gemini model layer are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, and complexity-first router are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

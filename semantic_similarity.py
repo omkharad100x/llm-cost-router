@@ -7,9 +7,10 @@ storage access occurs here.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from numbers import Real
 
 import numpy as np
+
+from cache_config import DEFAULT_CONFIG, _UNSET, validate_threshold
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,7 @@ def _normalized_vector(value, dimensions=None):
         ) from None
 
 
-def find_most_similar(query_vector, stored_queries, threshold=0.9):
+def find_most_similar(query_vector, stored_queries, threshold=_UNSET):
     """Return SimilarityMatch or None if no candidate reaches the threshold.
 
     stored_queries maps nonempty query strings to normalized vectors. Scores
@@ -57,13 +58,9 @@ def find_most_similar(query_vector, stored_queries, threshold=0.9):
     Equal scores select the first mapping entry. Invalid inputs raise ValueError,
     even when the collection is empty. Vectors are copied, never modified.
     """
-    if (
-        isinstance(threshold, (bool, np.bool_))
-        or not isinstance(threshold, Real)
-        or not -1 <= threshold <= 1
-        or not np.isfinite(threshold)
-    ):
-        raise ValueError("Similarity threshold must be a finite number from -1 to 1.")
+    threshold = validate_threshold(
+        DEFAULT_CONFIG.similarity_threshold if threshold is _UNSET else threshold
+    )
     if not isinstance(stored_queries, Mapping):
         raise ValueError("Stored queries must be a mapping of query text to vectors.")
     query = _normalized_vector(query_vector)

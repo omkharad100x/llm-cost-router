@@ -13,6 +13,7 @@ import uuid
 
 import numpy as np
 
+from cache_config import CacheConfig, DEFAULT_CONFIG, _UNSET, validate_threshold
 from embeddings import DIMENSIONS, MODEL
 from semantic_similarity import find_most_similar
 
@@ -128,7 +129,7 @@ def _validate_vector(value):
         vector = np.asarray(value)
         if vector.shape != (DIMENSIONS,):
             raise ValueError
-        find_most_similar(vector, {})
+        find_most_similar(vector, {}, threshold=-1)
         return vector.astype(np.float64)
     except (ValueError, TypeError, OverflowError):
         raise ValueError("Expected a normalized, finite 768-dimensional vector.") from None
@@ -138,13 +139,14 @@ class SemanticCache:
     """One connection per instance/thread; use as a context manager or close it."""
 
     def __init__(
-        self, path, embedder, *, threshold=0.9, ttl_seconds=86400,
+        self, path, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
         namespace="default", embedding_version="v1", clock=time.time,
     ):
-        # Reuse the search module's threshold validation without making a request.
-        probe = np.zeros(DIMENSIONS)
-        probe[0] = 1
-        find_most_similar(probe, {}, threshold=threshold)
+        if not isinstance(config, CacheConfig):
+            raise ValueError("config must be a CacheConfig instance.")
+        threshold = validate_threshold(
+            config.similarity_threshold if threshold is _UNSET else threshold
+        )
         if not _nonempty(namespace) or not _nonempty(embedding_version):
             raise ValueError("Namespace and embedding version must be nonempty.")
         self.threshold = threshold
@@ -230,8 +232,14 @@ class SemanticCache:
         except (ValueError, TypeError, OverflowError):
             return None
 
-    def lookup(self, query, *, eligibility=None):
-        """Embed an approved query, search eligible rows, and return a structured result."""
+    def lookup(self, query, *, eligibility=None, threshold=_UNSET):
+        """Search approved entries; a threshold override affects only this lookup.
+
+        Invalid thresholds raise ValueError before eligibility checks or API calls.
+        """
+        effective_threshold = validate_threshold(
+            self.threshold if threshold is _UNSET else threshold
+        )
         if not _eligible(query, eligibility):
             return CacheLookup(hit=False, reason="ineligible")
         self._db()
@@ -253,7 +261,7 @@ class SemanticCache:
             if stored_vector is not None:
                 candidates[row["original_query"]] = stored_vector
                 entries[row["original_query"]] = row
-        match = find_most_similar(vector, candidates, threshold=self.threshold)
+        match = find_most_similar(vector, candidates, threshold=effective_threshold)
         if match is None:
             return CacheLookup(hit=False)
         row = entries[match.query]

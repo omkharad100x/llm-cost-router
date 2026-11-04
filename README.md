@@ -48,6 +48,7 @@ llm-cost-router/
 ├── model_pricing.json          # Configurable per-model USD rates
 ├── embeddings.py               # Gemini query embeddings and normalization
 ├── semantic_similarity.py      # In-memory cosine search
+├── cache_config.py             # Validated semantic threshold defaults
 ├── semantic_cache.py           # Persistent SQLite cache and eligibility
 ├── requirements.txt            # Pinned runtime dependencies
 ├── requirements-dev.txt        # Runtime dependencies plus pytest
@@ -102,6 +103,41 @@ Run the complete offline test suite without collecting root level live API scrip
 Eligibility is **denied by default**. A trusted caller must provide `QueryEligibility` for the exact query, affirming that it is independent of conversation context, non-sensitive, time independent, and independent of external state. Storage also requires `ResponseEligibility` for the exact response, affirming API success, absence of a safety refusal, and non-sensitive content. These objects are attestations, not automatic safety classifiers. Failed or refused answers, personal data, follow-ups, and changing facts must not be approved for reuse. The current CLI does not make these assessments or use the cache.
 
 The cache stores query and answer text and float32 embeddings in a local SQLite file. Use an ignored `.db`, `.sqlite`, or `.sqlite3` path and protect the file with appropriate local access controls. Similarity does not prove that two questions deserve the same answer; the threshold has not been calibrated on a labeled dataset.
+
+## Cache threshold configuration
+
+`cache_config.py` centralizes the default in `CacheConfig(similarity_threshold=0.9)`
+and shares threshold validation with the cache and similarity search. Pass a
+configuration object to choose an application default; no environment variable,
+extra dependency, or pricing-file change is required.
+
+```python
+from cache_config import CacheConfig
+from semantic_cache import SemanticCache
+
+# embedder is an existing EmbeddingGenerator; query_review is a trusted
+# QueryEligibility assessment bound to this exact query.
+config = CacheConfig(similarity_threshold=0.92)
+with SemanticCache("semantic_cache.sqlite3", embedder, config=config) as cache:
+    result = cache.lookup(query, eligibility=query_review)  # Uses 0.92.
+    strict_result = cache.lookup(
+        query, eligibility=query_review, threshold=0.97,
+    )  # This lookup only; the cache default remains 0.92.
+```
+
+Precedence is **lookup override > constructor `threshold` > configuration default**.
+The existing `SemanticCache(path, embedder, threshold=0.95)` form remains supported.
+Without customization, the cache and direct `find_most_similar` calls retain
+the shared `0.9` default. Direct similarity searches also accept `threshold=...`.
+
+Thresholds must be finite real numbers in the inclusive range `[-1, 1]`.
+Booleans, strings, `None`, NaN, infinities, and out-of-range values raise
+`ValueError`; invalid lookup overrides fail before embedding or database access.
+Omit the argument to use the default. Zero and negative thresholds are valid
+and are never treated as missing. A score equal to the threshold is accepted;
+lower thresholds admit more matches and require careful quality evaluation.
+Overrides do not change eligibility requirements, stored entries, or TTLs.
+Configuration is supplied in Python and is not persisted in SQLite.
 
 ## Cost and embedding measurement
 

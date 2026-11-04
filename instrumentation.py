@@ -152,21 +152,32 @@ class InstrumentedGenerator:
             model, request_kind, kwargs,
         )
 
+    def generate_content_with_metrics(self, *, model, request_kind, **kwargs):
+        """Return (SDK response, metrics snapshot) from one instrumented call.
+
+        The snapshot can be None if metric extraction fails. Recorder failure
+        does not discard an already extracted snapshot. No shared last-call state.
+        """
+        return self._request(
+            self.client.models.generate_content, usage_metrics,
+            model, request_kind, kwargs, include_metrics=True,
+        )
+
     def embed_content(self, *, model, **kwargs):
         return self._request(
             self.client.models.embed_content, embedding_usage_metrics,
             model, "embedding", kwargs,
         )
 
-    def _request(self, method, extract_usage, model, request_kind, kwargs):
+    def _request(self, method, extract_usage, model, request_kind, kwargs, *, include_metrics=False):
         timestamp = datetime.now(timezone.utc).isoformat()
         response = None
         status = "error"
+        snapshot = None
         started = time.perf_counter()
         try:
             response = method(model=model, **kwargs)
             status = "success"
-            return response
         finally:
             latency_ms = (time.perf_counter() - started) * 1000
             try:
@@ -178,7 +189,11 @@ class InstrumentedGenerator:
                     "latency_ms": latency_ms,
                     **extract_usage(response, self.pricing.get(model)),
                 }
+                if include_metrics:
+                    snapshot = record.copy()
                 self.recorder(record)
             except Exception:
                 # Never let metrics failures alter responses, retries, or memory.
                 print("Warning: request metrics could not be recorded.", file=sys.stderr)
+
+        return (response, snapshot) if include_metrics else response

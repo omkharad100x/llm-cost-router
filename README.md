@@ -13,6 +13,7 @@ Repeated questions can incur repeated generation costs, while different question
 - `gemini-embedding-001` query embeddings with 768 dimensions and unit length NumPy normalization. Embedding requests use the same instrumentation.
 - NumPy cosine similarity search with a configurable inclusive threshold (default `0.9`).
 - A standalone SQLite semantic cache with TTL, namespace and embedding version scoping, duplicate protection, expiration cleanup, and explicit query and response eligibility.
+- A reusable Gemini model layer with explicit small/large roles, environment-configurable model IDs, structured responses, and shared instrumentation.
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
 
@@ -46,6 +47,8 @@ Python 3.14.5 is the version verified in the local virtual environment. The pinn
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── gemini_models.py            # Explicit small/large calls and structured responses
+├── model_config.py             # Model-name environment configuration
 ├── instrumentation.py          # SDK call timing, usage, pricing, JSONL records
 ├── model_pricing.json          # Configurable per-model USD rates
 ├── query_complexity.py         # Independent deterministic complexity classifier
@@ -372,8 +375,96 @@ The complete offline suite includes `tests/test_query_complexity.py`, covering
 simple and complex requests, long straightforward queries, configuration, exact
 boundaries, determinism, and execution with network connections disabled.
 
+## Small and large Gemini model integration
+
+`GeminiModels` wraps an existing `InstrumentedGenerator`. The caller explicitly
+selects `role="small"` or `role="large"`; this module does not classify requests
+or select a model based on cost or quality. The existing CLI still uses its own
+configured model and has not been connected to this layer.
+
+| Role | Environment variable | Default model ID |
+| --- | --- | --- |
+| small | `GEMINI_SMALL_MODEL` | `gemini-3.1-flash-lite` |
+| large | `GEMINI_LARGE_MODEL` | `gemini-3.8-flash` |
+
+Defaults were checked against Google's documentation on 2026-11-04:
+[Gemini 3.1 Flash-Lite](https://aistudio.google.com/docs/models/gemini-3.1-flash-lite)
+and [Gemini 3.8 Flash](https://aistudio.google.com/docs/models/gemini-3.8-flash).
+Small/large are application role names; this project has not benchmarked relative
+capability or verified model access for your account.
+
+Set model names for the current PowerShell session:
+
+```powershell
+$env:GEMINI_SMALL_MODEL = "gemini-3.1-flash-lite"
+$env:GEMINI_LARGE_MODEL = "gemini-3.8-flash"
+```
+
+`load_model_config()` reads only these two environment variables when explicitly
+called. Imports read no environment variables. No dotenv file is loaded by this
+layer. Missing variables use defaults; blank or malformed values raise
+`ValueError` without echoing their contents. Model IDs must begin with `gemini-`
+and contain letters, digits, dots, underscores, or hyphens. Syntax validation
+cannot confirm provider availability. Settings are captured at construction;
+create a new configuration/layer after changing the environment.
+
+Example wiring in a future application with its already configured generator
+(the generation calls below use the live API if executed with a real client):
+
+```python
+from gemini_models import GeminiModels, ModelCallError
+from model_config import load_model_config
+
+# generator is an existing InstrumentedGenerator using your configured client,
+# pricing mapping, and metrics recorder. Do not import main.py to obtain it.
+models = GeminiModels(generator, config=load_model_config())
+try:
+    small_response = models.generate("Define a tuple.", role="small")
+    large_response = models.generate("Derive a recurrence relation.", role="large")
+except ModelCallError:
+    # Decide how your application handles failure; messages omit SDK details.
+    pass
+```
+
+Both calls accept optional `generation_config`, passed through as the SDK's
+`config` argument. The current interface accepts one nonempty text query and
+performs synchronous generation. It adds no retries, model fallback, cache lookup,
+or escalation; any retries already configured in the shared SDK client still apply.
+
+The immutable `ModelResponse` contains `text`, requested `model`, `role`,
+`input_tokens`, `output_tokens`, `thinking_tokens`, `billed_output_tokens`,
+`latency_ms`, `estimated_cost_usd`, `cost_status`, and `timestamp_utc`.
+Unknown metrics remain `None`; explicit zero counts remain zero.
+Costs retain the existing decimal-string representation and pricing semantics.
+The current pricing file covers the default small model but not the default
+large model. Large calls therefore return `pricing_unavailable` and no cost
+until an appropriate entry is supplied through the existing pricing mapping.
+Custom model IDs need their own rates; no other model's price is substituted.
+
+A new opt-in `InstrumentedGenerator.generate_content_with_metrics()` returns
+the SDK response and a copy of that same request's metrics. It shares the
+existing measurement path, emits one recorder event, and uses no shared
+last-request state. Existing `generate_content()` and `embed_content()` behavior
+is preserved. Recorder failure still warns generically and preserves the result;
+metric extraction failure leaves the new layer's metrics unavailable.
+Latency measures the SDK invocation, excluding response parsing.
+
+Text parsing combines text parts from the first candidate, excluding thought
+parts. Other candidates and non-text parts are not returned. Missing candidates,
+empty responses, or invalid text raise `ModelResponseError` (a `ModelCallError`
+subclass). SDK errors become a generic `ModelCallError` with the raw traceback
+chain suppressed. Neither provider error messages nor prompts are logged by
+this layer. A successful SDK response rejected during parsing still has a
+`success` instrumentation status, because that status describes the API call.
+
+This is not answer-quality or refusal evaluation: partial text may be returned
+and nonempty text alone does not imply safety or correctness. Caller review
+remains necessary before caching. Offline tests use mocked SDK responses and
+synthetic environment values; real model availability, quota, and account
+permissions remain unverified.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, and query complexity classifier are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, and shared Gemini model layer are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, cost aware model routing, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

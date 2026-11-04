@@ -4,7 +4,7 @@ A Python project exploring how to reduce LLM API costs through measured requests
 
 ## Why this project?
 
-Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, and complexity-first model routing are implemented; quality escalation and a dashboard remain planned work.
+Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. Application integration and a dashboard remain planned work.
 
 ## Implemented features
 
@@ -14,6 +14,7 @@ Repeated questions can incur repeated generation costs, while different question
 - NumPy cosine similarity search with a configurable inclusive threshold (default `0.9`).
 - A standalone SQLite semantic cache with TTL, namespace and embedding version scoping, duplicate protection, expiration cleanup, and explicit query and response eligibility.
 - Independent deterministic answer-quality checks with weighted criteria, configurable acceptance, and explicit factual-verification limits.
+- A standalone escalation pipeline that evaluates routed answers, escalates a failed small-model answer once, and retains both attempts and complete metric totals.
 - A standalone complexity-first router: simple queries use the small role and complex queries use the large role, with explicit cost availability and routing reasons.
 - A reusable Gemini model layer with explicit small/large roles, environment-configurable model IDs, structured responses, and shared instrumentation.
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
@@ -34,7 +35,10 @@ flowchart LR
     Embed --> Gen
     Cache --> Similarity["NumPy cosine similarity"]
     Cache --> DB["Local SQLite database"]
-    Future -. "future application integration" .-> Router["ModelRouter"]
+    Future -. "future application integration" .-> Escalation["EscalationPipeline"]
+    Escalation --> Router["ModelRouter: initial call"]
+    Escalation --> Quality["evaluate_answer: quality heuristics"]
+    Escalation --> |"at most one additional large call"| Models
     Router --> Classifier["Query complexity classifier"]
     Router --> Models["GeminiModels: selected role"]
     Models --> Gen
@@ -51,6 +55,7 @@ Python 3.14.5 is the version verified in the local virtual environment. The pinn
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── escalation.py              # One quality-based escalation and attempt totals
 ├── answer_evaluator.py         # Independent heuristic answer-quality assessment
 ├── evaluation_config.py        # Quality weights, threshold, and acceptance rules
 ├── model_router.py             # Complexity-first routing and decision metadata
@@ -562,16 +567,17 @@ no retries or fallback; any retries already configured inside the SDK still appl
 Routing decisions are deterministic for the same query, classifier settings,
 role mapping, and pricing state. Generated content and request timing need not
 be deterministic. Classification remains heuristic and uncalibrated, so incorrect
-labels can select an unsuitable role. An independent answer evaluator is available;
-connecting it to routing and escalation remains future work, as do cache eligibility
-integration and integration into the existing CLI.
+labels can select an unsuitable role. The separate `EscalationPipeline` connects
+routing to the answer evaluator and may make one additional large-model call.
+Direct `ModelRouter.generate()` calls still generate only once. Cache eligibility
+integration and integration into the existing CLI remain future work.
 
 ## Independent answer-quality evaluation
 
 `answer_evaluator.evaluate_answer(query, answer)` assesses text using deterministic
 English heuristics. It uses only the standard library, reads no environment or
 secrets, makes no API calls, and does not invoke models, routing, or caching.
-Task 8 can consume its result to implement escalation separately.
+The separate `escalation.py` module consumes its result without changing the evaluator.
 
 ```python
 from answer_evaluator import evaluate_answer
@@ -641,9 +647,8 @@ words/numbers raises `ValueError`.
 probability.** Incorrect short answers can pass, synonyms can fail lexical
 relevance, keyword repetition can appear related, and quoted/negated uncertainty
 can trigger penalties. Honest qualifications and appropriate safety refusals can
-fail this adequacy check; a later escalation policy must not interpret that as
-permission to bypass a refusal. Code validity, reasoning correctness, factual
-claims, arbitrary multi-task coverage, and safety are not established. Calibrate
+fail this adequacy check; escalation is not permission to bypass a refusal.
+Code validity, reasoning correctness, factual claims, arbitrary multi-task coverage, and safety are not established. Calibrate
 the rules against reviewed examples before making automatic acceptance decisions.
 
 Offline tests in `tests/test_answer_evaluator.py` cover the criteria, configurable
@@ -651,8 +656,122 @@ blockers, short and long answers, invalid inputs, exact threshold boundaries,
 determinism, and execution with network access disabled. Existing routing
 behavior remains independent of these results.
 
+## Quality-based model escalation
+
+`EscalationPipeline` coordinates the existing router, evaluator, and shared
+`GeminiModels` instance. It is independently usable and **not integrated into
+the CLI or semantic cache**. It creates no client, loads no environment files,
+and adds no API calls for classification or evaluation.
+
+```python
+from escalation import EscalationError, EscalationPipeline
+from evaluation_config import EvaluationConfig
+
+# router is an existing ModelRouter using your instrumented GeminiModels.
+# Calling generate with a real client invokes Gemini; tests use a mocked client.
+pipeline = EscalationPipeline(
+    router, evaluation_config=EvaluationConfig(acceptance_threshold=0.8),
+)
+try:
+    result = pipeline.generate("What is the capital of France?")
+except EscalationError as error:
+    print(error.stage, error.total_attempts, error.totals.cost_status)
+else:
+    print(result.final_response.text)
+    print(result.final_evaluation.decision, result.final_evaluation.score)
+    print(result.escalated, result.total_attempts, result.totals)
+```
+
+Optional `generation_config` is forwarded unchanged to both model calls. The
+same evaluation configuration applies to both answers.
+
+| Initial outcome | Action |
+| --- | --- |
+| Any role passes | Return the initial answer; one attempt |
+| Small role fails | Generate once with the large role, then evaluate |
+| Large role fails | Return the failed initial answer; one attempt |
+| Small role fails but both configured model IDs are identical | Skip the duplicate call and return the failed initial answer |
+
+Initial routing runs exactly once and its decision is preserved. Escalation
+uses the same original query, without rewriting the prompt or changing the
+routing policy. If the large answer passes, it wins even if the failed initial
+answer has a higher numerical score. If both fail, the higher score wins;
+ties retain the initial answer. No third call is made.
+
+The frozen `EscalationResult` contains the original `query`,
+`initial_routing` (`RoutedGeneration`), `attempts`, `escalated`,
+`escalation_reason`, `escalation_role`, zero-based `final_attempt_index`, and
+`totals`. Convenience properties expose `total_attempts`, `initial_response`,
+`initial_evaluation`, `escalation_response`, `escalation_evaluation`,
+`final_response`, and `final_evaluation`. Each `GenerationAttempt` retains
+its role, model ID, original `ModelResponse`, and original `EvaluationResult`.
+
+### Usage, latency, and cost totals
+
+`AggregateMetrics` includes input, output, thinking, and billable output token
+totals, `latency_ms`, `estimated_cost_usd`, `cost_status`, and
+`attempt_cost_statuses`. Totals include **every attempt**, including a discarded
+answer. Each token total is calculated independently and is `None` if any
+attempt lacks that field; reported zero remains zero. Latency sums the existing
+generation-request timings, excluding orchestration and evaluation time, and is
+`None` if any request timing is unavailable.
+
+Cost sums the original USD strings using `Decimal` only when all attempt costs
+are known; it does not reprice requests. Missing cost is `None`, never a partial
+total. Aggregate cost status is:
+
+- `estimated`: every attempt has a cost estimate.
+- `pricing_unavailable`: at least one attempt reports missing model or cached-token pricing.
+- `incomplete`: another required cost is missing, including missing usage or response metrics.
+- `not_requested`: no generation attempt occurred before a classification error.
+
+`attempt_cost_statuses` preserves the specific source of missing cost. Per-attempt
+responses retain token counts, latency, cost, and UTC timestamps unchanged.
+The current price file does not price the default large model, so an escalated
+request normally has unknown total cost until its pricing is configured.
+
+### Errors, examples, and limits
+
+Generation or evaluation failures raise sanitized `EscalationError` and stop;
+they do not trigger fallback or further generation. Its `stage`, `attempts`,
+`total_attempts`, `totals`, `initial_routing`, and `routing_decision` retain
+available progress. An evaluation failure preserves the generated response and
+its metrics. A generation/response failure has no returned `ModelResponse`;
+its attempt therefore has `response=None` and `evaluation=None`, and totals
+requiring that response remain unknown. Existing instrumentation still records
+available request metrics through its recorder, but the current model error
+interface does not expose those metrics to this pipeline.
+
+For the query "What is the capital of France?", mocked "Paris." passes with
+score `0.85` and takes one call. Mocked "I don't know the capital of France."
+fails due to uncertainty despite scoring `0.9`; a subsequent "Paris." passes
+and is selected. Two failed answers scored `0.4` and `0.6` select the second,
+while `0.4` and `0.4` retain the first.
+
+These are heuristic decisions, not factual verification, safety judgments, or
+proof of cost savings. Escalation may add cost without improving the answer;
+both answers can fail and the returned `final_evaluation` will still say `fail`.
+The pipeline does not rewrite safety refusals or instruct a model to bypass them;
+production safety handling requires a separate policy. Distinct model aliases
+may resolve to the same provider model; only identical configured IDs can be
+recognized locally. There are no retries added here, but any retries configured
+inside the injected SDK client still apply. `total_attempts` counts model-layer
+invocations, not underlying HTTP retries. Decisions are deterministic for the
+same routing/evaluation results; model responses and request timings are not.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_escalation.py -q
+.\.venv\Scripts\python.exe -m pytest tests -q
+```
+
+The escalation tests use synthetic SDK responses and blocked network connections.
+They cover single-call acceptance, one escalation, selection and ties, role
+overrides, duplicate model IDs, metadata preservation, complete and unavailable
+totals, configuration, deterministic decisions, and generation/evaluation failures.
+No live model behavior or factual answer quality is validated.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, and independent answer evaluator are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, quality based escalation, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, and standalone escalation pipeline are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

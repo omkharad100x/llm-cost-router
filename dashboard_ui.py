@@ -9,6 +9,7 @@ import sqlite3
 
 import streamlit as st
 
+from cache_config import DEFAULT_CONFIG
 from dashboard_data import (
     PROJECT_ROOT, BenchmarkMetadata, RuntimeMetadata, SourceResult,
     load_benchmark, load_runtime,
@@ -24,22 +25,6 @@ STATUS_TEXT = {
     "invalid": "Needs attention", "unreadable": "Unavailable", "too_large": "Limit reached",
 }
 SECTION_DETAILS = {
-    "Cache Analytics": (
-        "Understand reuse, eligibility, and the trade-off between hits and false hits.",
-        "Cache analytics are coming next",
-        "Threshold comparisons and safe-reuse metrics will be added in Task 2. "
-        "This workspace keeps benchmark evidence separate from runtime activity.",
-        (("Reuse and eligibility", "Explore true hits, false hits, misses, and eligibility decisions."),
-         ("Threshold comparisons", "Compare reviewed query pairs across similarity thresholds.")),
-    ),
-    "Model Routing": (
-        "Follow complexity-based selection and quality-based escalation.",
-        "Routing analytics are coming next",
-        "Initial model selection and escalation will have separate views in Task 2. "
-        "The dashboard does not submit prompts or invoke models.",
-        (("Initial selection", "Inspect complexity labels and the selected small or large role."),
-         ("Quality and escalation", "Trace additional attempts and the final heuristic evaluation.")),
-    ),
     "Cost Analysis": (
         "Keep estimated spend, missing pricing, and token usage visible.",
         "Cost analytics are coming next",
@@ -158,6 +143,115 @@ def _overview(benchmark, runtime):
     ])
 
 
+def _metric_cards(items):
+    _cards([(label, "Unavailable" if value is None else value, hint, value is not None)
+            for label, value, hint in items])
+
+
+def _percent(rate):
+    return None if rate is None else f"{rate:.1%}"
+
+
+def _benchmark_status(source):
+    if source.status in ("invalid", "unreadable", "too_large"):
+        st.warning(source.message)
+    elif source.status != "ready":
+        st.info(source.message)
+    st.caption("Synthetic benchmark · missing report fields and rates with no observations display as unavailable.")
+
+
+def _cache_analytics(source):
+    st.title("Cache Analytics")
+    _benchmark_status(source)
+    experiments = (source.analytics or {}).get("cache", [])
+    cache = {}
+    if experiments:
+        thresholds = [c["t"] for c in experiments]
+        default = DEFAULT_CONFIG.similarity_threshold
+        selected = st.selectbox("Benchmark similarity threshold", thresholds,
+                                index=thresholds.index(default) if default in thresholds else 0)
+        cache = next(c for c in experiments if c["t"] == selected)
+    _metric_cards([
+        ("Cache hits", cache.get("hits"), "First lookup per reviewed pair"),
+        ("Cache misses", cache.get("misses"), "First lookup per reviewed pair"),
+        ("Hit rate", _percent(cache.get("hitRate")), "Hits / reviewed pairs"),
+        ("Miss rate", _percent(cache.get("missRate")), "Misses / reviewed pairs"),
+        ("Cached responses", cache.get("seeded"), "Fixture responses stored at this threshold"),
+        ("Generation calls avoided", cache.get("avoided"), "Includes repeated lookups and false hits"),
+        ("Total lookups", cache.get("lookups"), "All benchmark lookup repetitions"),
+        ("Average cache lookup", None if cache.get("lookup") is None else f"{cache['lookup']:.2f} ms",
+         "SQLite, mock embedding and search; excludes generation"),
+    ])
+    with st.container(border=True):
+        st.subheader("False matches by threshold")
+        st.caption("Synthetic benchmark · false hits reuse an answer across different tasks; "
+                   "false misses skip an equivalent pair. Each reviewed pair counts once.")
+        if any(c["falseHits"] is not None or c["falseMisses"] is not None for c in experiments):
+            st.bar_chart({"Threshold": [str(c["t"]) for c in experiments],
+                          "False hits": [c["falseHits"] for c in experiments],
+                          "False misses": [c["falseMisses"] for c in experiments]},
+                         x="Threshold", y=["False hits", "False misses"], stack=False,
+                         y_label="Reviewed pairs", color=["#2a705b", "#90ac42"])
+        else:
+            st.info("The report has no false-hit or false-miss counts.")
+        if experiments:
+            st.table([{"Threshold": c["t"], "Hits": c["hits"], "Misses": c["misses"],
+                       "False hits": c["falseHits"], "False misses": c["falseMisses"]}
+                      for c in experiments], hide_index=True)
+        if cache:
+            false_hits = _percent(cache["falseHitRate"]) or "Unavailable"
+            false_misses = _percent(cache["falseMissRate"]) or "Unavailable"
+            st.caption(f"Selected threshold · false-hit rate among must-not-match pairs: {false_hits}. "
+                       f"False-miss rate among safe-match pairs: {false_misses}.")
+    _metric_cards([("Current cached responses", None, "Database inventory unmeasured"),
+                   ("Cache storage usage", None, "Database size unmeasured")])
+    _note("Historical cache analytics unavailable. Request records omit cache decisions, "
+          "timings and avoided calls. Current cached responses and cache storage usage "
+          "are unavailable because neither source measures database inventory or bytes.")
+
+
+def _routing_analytics(source, runtime):
+    st.title("Model Routing")
+    _benchmark_status(source)
+    b = source.analytics or {}
+    _metric_cards([
+        ("Escalations", b.get("escalations"), "Queries that triggered a second attempt"),
+        ("Escalation rate", _percent(b.get("escalationRate")), "Escalations / benchmark queries"),
+        ("Initial answer acceptance", _percent(b.get("acceptanceRate")), "First answers passing evaluation / queries"),
+        ("Escalation success", _percent(b.get("successRate")), "Passing second answers / triggered escalations"),
+    ])
+    st.subheader("Query complexity")
+    _metric_cards([("Simple", b.get("simple"), "Synthetic benchmark · classified queries"),
+                   ("Complex", b.get("complex"), "Synthetic benchmark · classified queries")])
+    with st.container(border=True):
+        st.subheader("Model selection and usage")
+        st.caption("Synthetic benchmark · initial and final selections count queries. "
+                   "Model usage includes escalation calls. Final selection uses the returned answer.")
+        attempts, final = b.get("attempts", {}), b.get("final", {})
+        stages = [{"Stage": "Initial selection", "Small": b.get("small"), "Large": b.get("large")},
+                  {"Stage": "All attempts", "Small": attempts.get("small"), "Large": attempts.get("large")},
+                  {"Stage": "Final selection", "Small": final.get("small"), "Large": final.get("large")}]
+        if any(row[role] is not None for row in stages for role in ("Small", "Large")):
+            st.bar_chart(stages, x="Stage", y=["Small", "Large"], stack=False,
+                         color=["#2a705b", "#90ac42"], y_label="Count")
+            st.table(stages, hide_index=True)
+        else:
+            st.info("Model selection and attempt counts are unavailable in this report.")
+    st.subheader("Recorded model attempts")
+    records = runtime.metadata
+    if isinstance(records, RuntimeMetadata):
+        small, large = records.small_attempts, records.large_attempts
+    elif runtime.status == "empty":
+        small, large = 0, 0
+    else:
+        small, large = None, None
+        st.info(runtime.message)
+    _metric_cards([("Small model", small, "Historical · small_model records"),
+                   ("Large model", large, "Historical · large_model records")])
+    _note("Historical counts include successful and failed role-tagged calls. Request records "
+          "omit query classifications, attempt links, quality decisions and final selections.")
+
+
 def _analytics(section, benchmark, runtime):
     description, title, body, coverage = SECTION_DETAILS[section]
     st.title(section)
@@ -215,8 +309,7 @@ def _system_info(benchmark, runtime):
                  "environment values, and exception details are not displayed.")
         st.write("Sources are limited to 2 MiB each and 10,000 request records. "
                  "Linked files are rejected. No model clients or database connections are created.")
-        st.caption("The benchmark loader validates the metadata used here. Detailed metric validation "
-                   "and presentation will be extended alongside Task 2.")
+        st.caption("Benchmark analytics use numeric observations from the saved offline report.")
 
 
 def render_dashboard():
@@ -252,9 +345,13 @@ def render_dashboard():
     checked = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
     if section == "Overview":
         _overview(benchmark, runtime)
+    elif section == "Cache Analytics":
+        _cache_analytics(benchmark)
+    elif section == "Model Routing":
+        _routing_analytics(benchmark, runtime)
     elif section == "System Information":
         _system_info(benchmark, runtime)
     else:
         _analytics(section, benchmark, runtime)
     st.divider()
-    st.caption(f"Sources checked at {checked} · Dashboard foundation · Detailed analytics in Task 2")
+    st.caption(f"Sources checked at {checked} · Read-only local dashboard")

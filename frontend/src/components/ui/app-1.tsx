@@ -6,7 +6,8 @@ import {Button} from "./button";
 const pages=["Overview","Cache Analytics","Model Routing","Cost Analysis","Performance","System Information"];
 const icons=[LayoutDashboard,Database,Route,Wallet,Activity,Settings];
 const day=(d:Date)=>d.toISOString().slice(0,10);
-const ratio=(n:number|undefined,d:number|undefined)=>n!=null&&d? (100*n/d).toFixed(1)+"%":null;
+const percent=(fraction:number|null|undefined)=>fraction==null?null:(100*fraction).toFixed(1)+"%";
+const ratio=(n:number|null|undefined,d:number|null|undefined)=>n!=null&&d? (100*n/d).toFixed(1)+"%":null;
 const sum=(v:(number|null)[])=>v.length&&v.every((x):x is number=>x!=null)?v.reduce((a,b)=>a+b,0):null;
 const avg=(v:number[])=>v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
 const ms=(v:number|null|undefined)=>v==null?null:v.toFixed(1)+" ms";
@@ -32,13 +33,13 @@ function Panel({title, note, children}: {title:string; note:string; children:Rea
   return <section className="panel"><h2>{title}</h2><small>{note}</small>{children}</section>;
 }
 
-function Split({labels, values}: {labels:string[]; values:(number|undefined)[]}) {
-  if (values.some(value => value == null)) return <p className="empty">Benchmark counts unavailable.</p>;
-  const total = values.reduce<number>((count, value) => count + (value ?? 0), 0);
+function Split({labels, values, missing = "Report counts unavailable."}: {labels:string[]; values:(number|null|undefined)[]; missing?:string}) {
+  if (values.every(value => value == null)) return <p className="empty">{missing}</p>;
+  const total = sum(values.map(value => value ?? null));
   return <dl className="bars">{labels.map((label, i) => (
     <div key={label}>
-      <div className="line"><dt>{label}</dt><dd>{values[i]} {total > 0 && <small>({ratio(values[i], total)})</small>}</dd></div>
-      {total > 0 && <progress aria-label={label} max={total} value={values[i]}/>}
+      <div className="line"><dt>{label}</dt><dd>{values[i] ?? "Unavailable"} {total != null && total > 0 && <small>({ratio(values[i], total)})</small>}</dd></div>
+      {total != null && total > 0 && <progress aria-label={label} max={total} value={values[i] ?? undefined}/>}
     </div>
   ))}</dl>;
 }
@@ -101,15 +102,32 @@ export default function App1(){
  <div className="hero-number">{b?.queries??"—"}</div><p className="center">Routing queries · synthetic benchmark</p>
  <div className="hero-actions"><button onClick={()=>P(2)}>Routing <ArrowUpRight size={16}/></button><button onClick={()=>P(1)}>Cache <Database size={16}/></button></div>
  <div className="wallet-grid"><article><Route/><strong>{b?.simple??"—"}</strong>Simple queries</article><article><LayoutDashboard/><strong>{b?.complex??"—"}</strong>Complex queries</article><article className="lime"><DatabaseZap/><strong>{c?.avoided??"—"}</strong>API calls avoided</article><article><Activity/><strong>{b?.escalations??"—"}</strong>Escalations</article></div></section>
- <div className="four surface">{tile("Total requests",n)}{tile("Estimated API cost",money(total),"Historical estimate")}{bench("Cache hit rate",ratio(c?.hits,c&&c.hits+c.misses))}{unavailable("Estimated cost avoided")}</div>
+ <div className="four surface">{tile("Total requests",n)}{tile("Estimated API cost",money(total),"Historical estimate")}{bench("Cache hit rate",percent(c?.hitRate))}{unavailable("Estimated cost avoided")}</div>
  <section className="guide surface"><h2>Router workspace</h2><div className="orb" aria-hidden="true"/><strong>Explore your routing data</strong><div className="suggest">{[1,2,3].map(i=><button key={i} onClick={()=>P(i)}>{pages[i]} ↗</button>)}</div><div className="guide-bar"><Sparkles size={17}/><span key={historicScope}>{historicScope}</span><button onClick={()=>showFilters(!filters)}>Filters <SlidersHorizontal size={15}/></button></div></section>
- <section className="mix surface"><h2>Model distribution</h2><small>Synthetic benchmark · initial selections</small><div className="mix-body"><dl className="legend"><div><dt>Small</dt><dd>{b?.small??"—"}</dd></div><div><dt>Large</dt><dd>{b?.large??"—"}</dd></div></dl><div className="donut" style={{background:b?.queries?'conic-gradient(#09362e 0 '+(100*b.small/b.queries)+'%, #a5e773 0)':'#e8ebe7'}}><span>{b?.queries??"—"}<small>queries</small></span></div></div></section>
+ <section className="mix surface"><h2>Model distribution</h2><small>Synthetic benchmark · initial selections</small><div className="mix-body"><dl className="legend"><div><dt>Small</dt><dd>{b?.small??"—"}</dd></div><div><dt>Large</dt><dd>{b?.large??"—"}</dd></div></dl><div className="donut" style={{background:b?.queries && b.small!=null && b.large!=null?'conic-gradient(#09362e 0 '+(100*b.small/b.queries)+'%, #a5e773 0)':'#e8ebe7'}}><span>{b?.queries??"—"}<small>queries</small></span></div></div></section>
  <section className="balance surface"><h2>Cache outcomes</h2><small>Synthetic benchmark · threshold {c?.t??"—"}</small><div className="outcomes"><div><Database/> Hits <b>{c?.hits??"—"}</b></div><div><Route/> Misses <b>{c?.misses??"—"}</b></div></div></section>
  <section className="activity surface"><h2>Recent system activity</h2><small>Historical · newest first</small>{rows.length>0&&<table><thead><tr><th>Request</th><th>UTC time</th><th>Status</th></tr></thead><tbody>{rows.slice(0,5).map((r,i)=><tr key={i}><td>{r.kind}</td><td>{r.time.slice(0,19)}</td><td>{r.status}</td></tr>)}</tbody></table>}{!rows.length&&<p className="empty">{historyEmpty}</p>}</section>
  <div className="flow">{chart()}</div></div>}
- {page===1&&<><label className="pick">Benchmark similarity threshold<select value={c?.t??""} onChange={e=>T(Number(e.target.value))}>{b?.cache.map(x=><option key={x.t}>{x.t}</option>)}</select></label><div className="tiles">{bench("Hit rate",ratio(c?.hits,c&&c.hits+c.misses))}{bench("Miss rate",ratio(c?.misses,c&&c.hits+c.misses))}{unavailable("Cached responses")}{bench("API calls avoided",c?.avoided)}{bench("Average cache lookup",ms(c?.lookup))}{unavailable("Cache storage usage")}</div><div className="panels threshold-panels">
+ {page===1&&<>
+ <label className="pick">Benchmark similarity threshold
+   <select value={c?.t??""} disabled={!b?.cache.length} onChange={e=>T(Number(e.target.value))}>
+     {!b?.cache.length && <option value="">Unavailable</option>}
+     {b?.cache.map(x=><option key={x.t}>{x.t}</option>)}
+   </select>
+ </label>
+ <p className="context">Synthetic benchmark · {c ? c.pairs+" reviewed pairs, one outcome per pair." : "Reviewed pair counts unavailable."}</p>
+ <div className="tiles">
+   {bench("Cache hits",c?.hits)}{bench("Cache misses",c?.misses)}
+   {bench("Hit rate",percent(c?.hitRate))}{bench("Miss rate",percent(c?.missRate))}
+ </div>
+ <div className="tiles">
+   {bench("Cached fixture responses",c?.seeded)}{bench("Generation calls avoided",c?.avoided)}
+   {bench("Total lookups",c?.lookups)}{bench("Average cache lookup",ms(c?.lookup))}
+ </div>
+ <p className="context">Avoided calls include repeated lookups and false hits. Lookup latency covers SQLite, mock embedding and search.</p>
+ <div className="panels threshold-panels">
  <Panel title="False matches by threshold" note="Synthetic benchmark · reviewed pairs">
- {b?.cache.length ? <>
+ {b?.cache.some(x => x.falseHits != null || x.falseMisses != null) ? <>
    <div className="series-key"><span>False hits</span><span>False misses</span></div>
    <ResponsiveContainer width="100%" height={176}>
      <LineChart accessibilityLayer data={b.cache} margin={{top:10,right:22,left:0,bottom:4}}>
@@ -121,9 +139,30 @@ export default function App1(){
        <Line dataKey="falseMisses" name="False misses" stroke="#737c2e" strokeDasharray="5 3" strokeWidth={2} dot={{r:3}} isAnimationActive={!reducedMotion} animationDuration={220}/>
      </LineChart>
    </ResponsiveContainer>
- </> : <p className="empty">Benchmark unavailable.</p>}</Panel>
- <Panel title="Similarity threshold analysis" note="Synthetic benchmark · reviewed query pairs"><table><thead><tr>{["Threshold","Hits","Misses","False hits","False misses"].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{b?.cache.map(x=><tr key={x.t} data-selected={x.t===c?.t} aria-current={x.t===c?.t ? "true" : undefined}>{[x.t,x.hits,x.misses,x.falseHits,x.falseMisses].map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table>{!b&&<p>Benchmark unavailable.</p>}</Panel></div></>}
- {page===2&&<><div className="tiles">{bench("Escalations",b?.escalations)}{bench("Escalation rate",ratio(b?.escalations,b?.queries))}{bench("Initial answer acceptance",ratio(b?.accepted,b?.queries))}{bench("Escalation success",ratio(b?.successes,b?.escalations))}</div><div className="panels">{[["Query complexity",["Simple","Complex"],[b?.simple,b?.complex]],["Initial model selection frequency",["Small","Large"],[b?.small,b?.large]],["Final model selection",["Small","Large"],[b?.final.small,b?.final.large]]].map(([title,labels,values])=><Panel key={String(title)} title={String(title)} note="Synthetic benchmark · queries"><Split labels={labels as string[]} values={values as number[]}/></Panel>)}</div></>}
+ </> : <p className="empty">The report has no false-hit or false-miss counts.</p>}</Panel>
+ <Panel title="Similarity threshold analysis" note="Synthetic benchmark · reviewed query pairs"><table><thead><tr>{["Threshold","Hits","Misses","False hits","False misses"].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{b?.cache.map(x=><tr key={x.t} data-selected={x.t===c?.t} aria-current={x.t===c?.t ? "true" : undefined}>{[x.t,x.hits,x.misses,x.falseHits,x.falseMisses].map((v,i)=><td key={i}>{v ?? "—"}</td>)}</tr>)}</tbody></table>{!b&&<p>Benchmark unavailable.</p>}</Panel></div>
+ <p className="context">False-hit rate among must-not-match pairs <strong>{percent(c?.falseHitRate) ?? "Unavailable"}</strong>
+   {" · "}False-miss rate among safe-match pairs <strong>{percent(c?.falseMissRate) ?? "Unavailable"}</strong></p>
+ <div className="tiles">{unavailable("Current cached responses")}{unavailable("Cache storage usage")}</div>
+ <p className="context">Historical cache metrics unavailable. The request log omits cache decisions, lookup times and avoided calls. Neither source measures current cached responses or cache storage usage. A dash indicates a missing count.</p>
+ </>}
+ {page===2&&<>
+ <div className="tiles">
+   {bench("Escalations",b?.escalations)}{bench("Escalation rate",percent(b?.escalationRate))}
+   {bench("Initial answer acceptance",percent(b?.acceptanceRate))}{bench("Escalation success",percent(b?.successRate))}
+ </div>
+ <p className="context">Escalation and initial acceptance rates use all benchmark queries. Escalation success counts passing second answers per triggered escalation.</p>
+ <div className="panels">
+   <Panel title="Query complexity" note="Synthetic benchmark · classified queries"><Split labels={["Simple","Complex"]} values={[b?.simple,b?.complex]}/></Panel>
+   <Panel title="Initial model selection frequency" note="Synthetic benchmark · first role per query"><Split labels={["Small","Large"]} values={[b?.small,b?.large]}/></Panel>
+   <Panel title="All model attempts" note="Synthetic benchmark · includes escalation calls"><Split labels={["Small","Large"]} values={[b?.attempts.small,b?.attempts.large]}/></Panel>
+   <Panel title="Final model selection" note="Synthetic benchmark · role of the returned answer"><Split labels={["Small","Large"]} values={[b?.final.small,b?.final.large]}/></Panel>
+   <Panel title="Recorded model attempts" note="Historical · role-tagged requests in the selected dates and model">
+     <Split labels={["Small","Large"]} missing={historyEmpty} values={["small_model","large_model"].map(kind=>n==null?null:rows.filter(r=>r.kind===kind).length)}/>
+   </Panel>
+ </div>
+ <p className="context">Historical counts include successful and failed role-tagged calls. The request log omits classifications, linked attempts, evaluation outcomes and final selections.</p>
+ </>}
  {page===3&&<><div className="tiles">{tile("Total estimated expenditure",money(total),"Historical estimate")}{tile("Cost per request",money(total!=null&&rows.length?total/rows.length:null),"Historical estimate")}{unavailable("Input token cost")}{unavailable("Output token cost")}</div><h2 className="metric-group">Cost comparison</h2><div className="tiles">{unavailable("Baseline cost")}{unavailable("Optimized scenario cost")}{unavailable("Estimated savings")}{unavailable("Savings percentage")}</div><div className="panels">{chart(true)}<Panel title="Cost by model" note={"Historical estimates · "+currency}>{models.filter(m=>model==="All models"||model===m).map(m=><p className="line" key={m}>{m}<b>{money(sum(rows.filter(r=>r.model===m).map(r=>r.cost)))??"Unavailable"}</b></p>)}</Panel></div></>}
  {page===4&&<><h2 className="metric-group">Request latency</h2><div className="tiles">{tile("Average latency",ms(avg(lat)))}{[50,95,99].map(p=>tile("P"+p+" latency",ms(pct(p/100))))}</div><h2 className="metric-group">Processing time</h2><div className="tiles">{bench("Cache lookup latency",ms(c?.lookup))}{["Embedding","Generation"].map((k)=>tile(k+" latency",ms(avg(rows.filter(r=>(r.kind==="embedding")===(k==="Embedding")&&r.ms!=null).map(r=>r.ms!)))))}{unavailable("Escalation overhead")}</div><h2 className="metric-group">Usage and quality</h2><div className="tiles">{tile("Input tokens",sum(rows.map(r=>r.input)))}{tile("Output tokens",sum(rows.map(r=>r.output)))}{bench("Final answer-quality pass rate",ratio(b?.passed,b?.queries))}</div></>}
  {page===5&&<div className="tiles system-list">{tile("Small Gemini model",data?.small,"Configured")}{tile("Large Gemini model",data?.large,"Configured")}{tile("Cache schema",data?.schema,"Configuration")}{tile("Application cache version",data?.version,"Configuration")}{tile("Similarity threshold",data?.threshold,"Default")}{tile("Evaluation threshold",data?.evaluation,"Default")}{tile("Database status","Not probed","Local")}{tile("API connectivity","Not probed","Live")}{unavailable("Application version")}{tile("Last successful request",rows.find(r=>r.status==="success")?.time)}</div>}

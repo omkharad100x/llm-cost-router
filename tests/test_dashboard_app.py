@@ -145,3 +145,25 @@ def test_overview_counts_follow_validated_metadata(app, monkeypatch, pair_count,
     assert f'<div class="lcr-tile-value">{routing_count}</div>' in output
     assert '<div class="lcr-tile-value">2</div>' in output
     assert "Unavailable" in output  # Absent request records never become zero.
+
+
+def test_analytics_threshold_selection_and_separate_historical_panel(app, tmp_path):
+    report = json.loads((ROOT / "benchmark_report.json").read_bytes())
+    (tmp_path / "benchmark_report.json").write_text(json.dumps(report), encoding="utf-8")
+    app.radio[0].set_value("Cache Analytics").run()
+    assert not app.exception
+    for experiment in report["cache_benchmarks"]:
+        app.selectbox[0].set_value(experiment["threshold"]).run()
+        assert not app.exception
+        assert f'{experiment["metrics"]["hit_rate"]:.1%}' in html(app)
+        assert "Fixture responses stored at this threshold" in html(app)
+        assert len(app.table) == 1
+    app.radio[0].set_value("Model Routing").run()
+    assert not app.exception and len(app.table) == 1
+    assert "Historical · large_model records" in html(app)
+    assert "Unavailable" in html(app)
+    (tmp_path / "request_metrics.jsonl").write_text("", encoding="utf-8")
+    app.button[0].click().run()
+    assert not app.exception
+    for role in ("Small", "Large"):
+        assert f'<h3>{role} model</h3><div class="lcr-value lcr-ready">0</div>' in html(app)

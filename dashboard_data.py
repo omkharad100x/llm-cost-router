@@ -8,6 +8,8 @@ import math
 from pathlib import Path
 import re
 
+from dashboard_metrics import benchmark_metrics
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
@@ -33,6 +35,8 @@ class BenchmarkMetadata:
 class RuntimeMetadata:
     record_count: int
     latest_timestamp_utc: str
+    small_attempts: int = 0
+    large_attempts: int = 0
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,7 @@ class SourceResult:
     status: str
     message: str
     metadata: BenchmarkMetadata | RuntimeMetadata | None = None
+    analytics: dict | None = None
 
     @property
     def label(self):
@@ -108,7 +113,7 @@ def _count(value):
 
 
 def validate_benchmark_report(payload):
-    """Validate the metadata needed by this foundation, not future analytics.
+    """Validate the report envelope before projecting dashboard metrics.
 
     Return only typed counts and thresholds. Text, configuration secrets, raw
     responses, and unknown fields are never passed through to the dashboard.
@@ -196,7 +201,7 @@ def validate_runtime_record(record):
     return timestamp.astimezone(timezone.utc)
 
 
-def _result(kind, status, metadata=None):
+def _result(kind, status, metadata=None, analytics=None):
     messages = {
         "ready": "Source metadata validated. Ready for the analytics workspace.",
         "empty": "No observations are available in this source yet.",
@@ -205,7 +210,7 @@ def _result(kind, status, metadata=None):
         "unreadable": "This source could not be read safely. Check file access and use a regular local file.",
         "too_large": "This source exceeds the dashboard limit. Use a smaller report or rotate the request log.",
     }
-    return SourceResult(kind, status, messages[status], metadata)
+    return SourceResult(kind, status, messages[status], metadata, analytics)
 
 
 def load_benchmark(directory=PROJECT_ROOT):
@@ -213,9 +218,10 @@ def load_benchmark(directory=PROJECT_ROOT):
         text = _read_source(directory, "benchmark")
         if not text.strip():
             return _result("benchmark", "empty")
-        metadata = validate_benchmark_report(_json(text))
+        report = _json(text)
+        metadata = validate_benchmark_report(report)
         status = "ready" if metadata.pair_count or metadata.routing_query_count else "empty"
-        return _result("benchmark", status, metadata)
+        return _result("benchmark", status, metadata, benchmark_metrics(report))
     except _SourceIssue as error:
         return _result("benchmark", error.status)
     except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError):
@@ -227,17 +233,22 @@ def load_runtime(directory=PROJECT_ROOT):
         text = _read_source(directory, "runtime")
         count = 0
         latest = None
+        roles = dict(small_model=0, large_model=0)
         for line in text.splitlines():
             if not line.strip():
                 continue
             count += 1
             if count > MAX_RUNTIME_RECORDS:
                 return _result("runtime", "too_large")
-            timestamp = validate_runtime_record(_json(line))
+            record = _json(line)
+            timestamp = validate_runtime_record(record)
+            if record['request_kind'] in roles:
+                roles[record['request_kind']] += 1
             latest = timestamp if latest is None else max(latest, timestamp)
         if not count:
             return _result("runtime", "empty")
-        return _result("runtime", "ready", RuntimeMetadata(count, latest.isoformat()))
+        metadata = RuntimeMetadata(count, latest.isoformat(), roles["small_model"], roles["large_model"])
+        return _result("runtime", "ready", metadata)
     except _SourceIssue as error:
         return _result("runtime", error.status)
     except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError):

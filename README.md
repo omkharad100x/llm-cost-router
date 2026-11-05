@@ -4,7 +4,7 @@ A Python project exploring how to reduce LLM API costs through measured requests
 
 ## Why this project?
 
-Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. A read-only Streamlit dashboard foundation is available; detailed analytics and application integration remain planned work.
+Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. The read-only dashboard displays offline cache and routing results alongside available historical request records.
 
 ## Implemented features
 
@@ -20,7 +20,7 @@ Repeated questions can incur repeated generation costs, while different question
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
 - Reproducible offline cache, routing, and escalation benchmarks with JSON reports, explicit incomplete costs, and measured local mock-call timings.
-- A dark Streamlit dashboard foundation with six sections, safe source metadata, refresh, and clear empty/error states.
+- A six-section local dashboard with cache and routing analytics, source labels, refresh, and explicit availability states.
 
 ## Architecture
 
@@ -53,7 +53,7 @@ The cache creates no answer: a caller must decide whether to use a hit or genera
 
 ## Technology
 
-Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit powers the local, read-only dashboard foundation; detailed analytics and model interaction are not connected yet. SQLite comes with Python. No PostgreSQL integration is implemented.
+Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit powers the local, read-only dashboard. SQLite comes with Python. No PostgreSQL integration is implemented.
 
 ## Repository layout
 
@@ -916,9 +916,23 @@ restart.
 The sidebar provides **Overview**, **Cache Analytics**, **Model Routing**,
 **Cost Analysis**, **Performance**, and **System Information**. Overview shows
 validated benchmark counts, source availability, and the boundaries of existing components. System Information
-shows local software versions and source checks. Analytics sections have prepared
-layouts and explicit Task 2 empty states; no fabricated charts, hardcoded
-performance claims, prompt submission, or model controls are included.
+shows local software versions and source checks.
+
+**Cache Analytics** uses one outcome per reviewed query pair at the selected threshold.
+The false-hit rate divides false hits by must-not-match pairs. The false-miss rate
+divides false misses by safe-match pairs. Stored fixture responses count successful
+seeds at that threshold. Calls avoided and average local lookup latency cover all
+lookup repetitions, including false hits. Current database inventory and size are unmeasured.
+
+**Model Routing** separates classifications, initial selections, all model attempts
+and the role of the returned answer. An escalation can still return the first answer.
+Initial acceptance and escalation rates use all benchmark queries. Escalation success
+uses triggered escalations. Historical usage counts only role-tagged attempts,
+including errors. The log lacks linked routing decisions, quality outcomes and cache events.
+
+Both dashboards use the numeric projection in `dashboard_metrics.py`. React date
+and model filters apply only to historical records. See the [React setup](frontend/README.md)
+for the local preview. Missing observations and undefined rates display as unavailable.
 
 The visual direction adapts Afzal Masud's
 [Fynix finance dashboard](https://dribbble.com/shots/26895720-AI-Finance-Management-Dashboard):
@@ -951,9 +965,7 @@ refresh after the writer completes or the file is repaired. The readers reject
 linked files and bound each source to 2 MiB and runtime logs to 10,000 records.
 There is no persistent data cache: navigation and refresh both reread the sources.
 
-This is **metadata validation for the dashboard foundation**, not a validator
-for every nested analytics metric. Task 2 will extend the safe projection and
-validation when detailed views are added. Runtime records accept the existing
+The loader validates the report envelope and the numeric fields used by these views. Runtime records accept the existing
 answer, memory summary, embedding, and small/large model request kinds; custom
 record schemas require a loader update. The dashboard has no live monitoring,
 automatic refresh, cache controls, or deployment configuration.
@@ -970,6 +982,6 @@ internal test event loop. Browser verification covers desktop and phone layouts.
 
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, detailed dashboard analytics, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional cost and performance analytics, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

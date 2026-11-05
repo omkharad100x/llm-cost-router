@@ -24,3 +24,6 @@ request_metrics.jsonl
 *.sqlite-*
 *.sqlite3
 *.sqlite3-*
+
+# Streamlit secrets
+.streamlit/secrets.toml

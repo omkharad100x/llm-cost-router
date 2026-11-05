@@ -1,0 +1,1 @@
+From this directory run npm ci, then npm run dev. Open http://127.0.0.1:5173. For a production build run npm run build, then npm run preview. Both local servers use the project .venv to serve validated metadata at /api/workspace. Components live under src/components/ui and global Tailwind styles in src/index.css. The original Streamlit dashboard remains available separately.

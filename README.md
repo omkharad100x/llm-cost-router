@@ -4,7 +4,7 @@ A Python project exploring how to reduce LLM API costs through measured requests
 
 ## Why this project?
 
-Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. Application integration and a dashboard remain planned work.
+Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. A read-only Streamlit dashboard foundation is available; detailed analytics and application integration remain planned work.
 
 ## Implemented features
 
@@ -20,6 +20,7 @@ Repeated questions can incur repeated generation costs, while different question
 - Standalone deterministic query complexity classification into simple or complex, with configurable weighted signals and explicit reasons.
 - Offline tests, including an integration test that stores a mocked Gemini answer, reopens SQLite, and retrieves it using a similar query without another answer generation call.
 - Reproducible offline cache, routing, and escalation benchmarks with JSON reports, explicit incomplete costs, and measured local mock-call timings.
+- A dark Streamlit dashboard foundation with six sections, safe source metadata, refresh, and clear empty/error states.
 
 ## Architecture
 
@@ -30,6 +31,9 @@ flowchart LR
     Gen --> Gemini["Gemini generation API"]
     Gen --> Metrics["request_metrics.jsonl"]
     CLI --> Memory["memory.txt"]
+    Dashboard["Streamlit dashboard"] --> Sources["Validated source metadata"]
+    Sources --> Report["Offline benchmark_report.json"]
+    Sources --> Metrics
 
     Future["Future application pipeline"] -. "not wired into CLI" .-> Cache["SemanticCache: SQLite"]
     Cache --> Embed["EmbeddingGenerator"]
@@ -49,13 +53,18 @@ The cache creates no answer: a caller must decide whether to use a hit or genera
 
 ## Technology
 
-Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit is installed but **no Streamlit application exists yet**. SQLite comes with Python. No PostgreSQL integration is implemented.
+Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit powers the local, read-only dashboard foundation; detailed analytics and model interaction are not connected yet. SQLite comes with Python. No PostgreSQL integration is implemented.
 
 ## Repository layout
 
 ```text
 llm-cost-router/
 ├── main.py                     # Existing Gemini CLI and local memory
+├── dashboard.py                # Local Streamlit entry point
+├── dashboard_ui.py             # Navigation and presentation
+├── dashboard_data.py           # Read-only source loading and metadata validation
+├── assets/dashboard.css        # Scoped, responsive dashboard styles
+├── .streamlit/config.toml      # Dark theme and loopback-only local server defaults
 ├── benchmarks.py              # Offline experiments and JSON/human summaries
 ├── benchmark_report.json       # Sample synthetic run; timings vary by machine
 ├── escalation.py              # One quality-based escalation and attempt totals
@@ -886,8 +895,81 @@ priced mock attempts. No actual API spending, factual quality, or production
 cost reduction is claimed. CLI and cache/routing application integration remain
 separate from this benchmark-only orchestration.
 
+
+## Local Streamlit dashboard
+
+Start from the repository root so Streamlit picks up the local theme and server
+configuration. No API key or environment-file setup is needed for the dashboard.
+
+```powershell
+cd D:\Projects\llm-cost-router
+.\.venv\Scripts\python.exe -m streamlit run dashboard.py --server.address 127.0.0.1 --server.port 8501
+```
+
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Stop the server with
+`Ctrl+C`. The checked-in configuration binds to loopback, disables usage
+telemetry, and keeps the browser from opening automatically. It does not
+configure deployment or authentication. File watching is disabled; restart the
+server after code changes. **Refresh data** rereads source files without a
+restart.
+
+The sidebar provides **Overview**, **Cache Analytics**, **Model Routing**,
+**Cost Analysis**, **Performance**, and **System Information**. Overview shows
+validated benchmark counts, source availability, and the boundaries of existing components. System Information
+shows local software versions and source checks. Analytics sections have prepared
+layouts and explicit Task 2 empty states; no fabricated charts, hardcoded
+performance claims, prompt submission, or model controls are included.
+
+The visual direction adapts Afzal Masud's
+[Fynix finance dashboard](https://dribbble.com/shots/26895720-AI-Finance-Management-Dashboard):
+a pale sage canvas, rounded white cards, forest-green navigation, and lime accents.
+The [editable Figma design](https://www.figma.com/design/MZPHEMgjfqAb2OO0u5FozR)
+documents the overview. Finance figures and chat controls are not reproduced.
+Overview counts come from validated metadata; missing counts display
+**Unavailable**, while a reported zero remains zero. Cards wrap on narrow screens
+and Streamlit provides the collapsible sidebar and keyboard-accessible controls.
+The theme is in `.streamlit/config.toml` and scoped styling in `assets/dashboard.css`.
+
+`dashboard.py` is the entry point, `dashboard_ui.py` contains presentation, and
+`dashboard_data.py` independently loads and validates the two fixed data sources:
+
+| Source | Identity | Foundation behavior |
+| --- | --- | --- |
+| `benchmark_report.json` | Offline, synthetic benchmark | Validate report version, dataset counts, threshold experiments, and routing count consistency |
+| `request_metrics.jsonl` | Local instrumentation records | Validate record fields, usage/cost availability, and timestamps; file presence does not establish live provenance |
+
+Only typed metadata reaches the UI. Unknown fields, raw reports, queries,
+answers, model-provided text, and exception details are not rendered. The
+dashboard does not read environment files, personal memory, or SQLite caches,
+and does not import the CLI, create model clients, or run benchmarks. Existing
+CLI, cache, routing, quality evaluation, and escalation behavior remain unchanged.
+
+Missing files, blank sources, zero-observation datasets, invalid JSON, unsupported
+schemas, unreadable files, and size limits have distinct friendly states.
+Malformed JSONL is rejected as a whole, including an unfinished final line;
+refresh after the writer completes or the file is repaired. The readers reject
+linked files and bound each source to 2 MiB and runtime logs to 10,000 records.
+There is no persistent data cache: navigation and refresh both reread the sources.
+
+This is **metadata validation for the dashboard foundation**, not a validator
+for every nested analytics metric. Task 2 will extend the safe projection and
+validation when detailed views are added. Runtime records accept the existing
+answer, memory summary, embedding, and small/large model request kinds; custom
+record schemas require a loader update. The dashboard has no live monitoring,
+automatic refresh, cache controls, or deployment configuration.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_dashboard_data.py tests/test_dashboard_app.py -q
+.\.venv\Scripts\python.exe -m pytest tests -q
+```
+
+Offline tests cover import boundaries, source labeling, safe projection, malformed
+and missing files, limits, all six navigation sections, and refresh recovery.
+They block external connections; Windows loopback is allowed for Streamlit's
+internal test event loop. Browser verification covers desktop and phone layouts.
+
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, and offline component benchmarks are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, analytics, Streamlit UI, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, detailed dashboard analytics, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

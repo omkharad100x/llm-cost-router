@@ -1,0 +1,1 @@
+import {createRoot} from "react-dom/client"; import App1 from "./components/ui/app-1"; import "./index.css"; createRoot(document.getElementById("root")!).render(<App1/>);

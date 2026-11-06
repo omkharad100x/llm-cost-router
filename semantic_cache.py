@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import json
 import math
 from numbers import Real
+from pathlib import Path
 import sqlite3
 import time
 import uuid
@@ -122,6 +123,7 @@ class SemanticCache:
     def __init__(
         self, path, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
         namespace="default", embedding_version="v1", cache_version=_UNSET, clock=time.time,
+        connection_timeout=5, require_existing=False, allow_initialize=True,
     ):
         if not isinstance(config, CacheConfig):
             raise ValueError("config must be a CacheConfig instance.")
@@ -133,6 +135,11 @@ class SemanticCache:
         cache_version = config.cache_version if cache_version is _UNSET else cache_version
         if not _nonempty(cache_version):
             raise ValueError("Cache version must be a nonempty string.")
+        if (type(connection_timeout) not in (int, float) or not math.isfinite(connection_timeout)
+                or not 0 <= connection_timeout <= 60):
+            raise ValueError("Connection timeout must be between 0 and 60 seconds.")
+        if type(require_existing) is not bool or type(allow_initialize) is not bool:
+            raise ValueError("Database opening policies must be boolean.")
         self.cache_version = cache_version
         self.threshold = threshold
         self.ttl_seconds = _positive_seconds(ttl_seconds)
@@ -145,12 +152,15 @@ class SemanticCache:
         )
         self._connection = None
         try:
-            self._connection = sqlite3.connect(path, timeout=5)
+            target = Path(path).absolute().as_uri()+"?mode=rw" if require_existing else path
+            self._connection = sqlite3.connect(target, timeout=connection_timeout, uri=require_existing)
             self._connection.row_factory = sqlite3.Row
             with self._connection:
                 self._connection.execute("BEGIN IMMEDIATE")
                 version = self._connection.execute("PRAGMA user_version").fetchone()[0]
                 if version == 0:
+                    if not allow_initialize:
+                        raise CacheError("Explicit database initialization is required.")
                     tables = self._connection.execute(
                         "SELECT name FROM sqlite_master WHERE type = 'table' "
                         "AND name NOT LIKE 'sqlite_%'"

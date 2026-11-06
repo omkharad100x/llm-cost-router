@@ -35,7 +35,7 @@ type HistoricalCosts = CostSummary & {
   by_model: (CostSummary & {model:string})[]; embedding:CostSummary;
   daily:{date:string;cost:string|null;display:string|null}[];
 };
-type Workspace={history:RequestRow[]|null;costs:HistoricalCosts|null;hs:string;bench:Benchmark|null;bs:string;small:string;large:string;schema:number;version:string;threshold:number;evaluation:number};
+type Workspace={database:{backend:string;mode:string;configuration:string;connection:string};history:RequestRow[]|null;costs:HistoricalCosts|null;hs:string;bench:Benchmark|null;bs:string;small:string;large:string;schema:number;version:string;threshold:number;evaluation:number};
 export function useWorkspace(options:Record<string,string>){
  const [data,setData]=useState<Workspace|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState("");
  const active = useRef<AbortController|null>(null);

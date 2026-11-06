@@ -426,6 +426,11 @@ def _system_info(benchmark, runtime):
         ("Streamlit", _package_version("streamlit"), "Installed dashboard framework", False),
         ("SQLite", sqlite3.sqlite_version, "Python's built-in database engine", False),
     ])
+    from database_config import database_summary
+    database = database_summary()
+    _cards([(label, database[key], "Configuration only; no connection probe.", False)
+            for label, key in (("Database backend", "backend"), ("Database mode", "mode"),
+                               ("Database configuration", "configuration"), ("Database status", "connection"))])
     st.subheader("Application boundaries")
     with st.container(border=True):
         for heading, detail in (

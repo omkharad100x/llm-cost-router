@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import dashboard_data as ds
+from database_config import database_summary
 from dashboard_metrics import historical_metrics
 from cache_config import DEFAULT_CONFIG
 from cache_schema import SCHEMA_VERSION
@@ -30,7 +31,7 @@ def workspace(options=None):
         except (ValueError, TypeError, ArithmeticError):
             costs = None
     models = load_model_config()
-    return dict(history=history, costs=costs,
+    return dict(history=history, costs=costs, database=database_summary(),
                 hs="Ready" if runtime.status in ("ready", "empty") else runtime.status.capitalize(),
                 bench=report.analytics, bs=report.status.capitalize(),
                 small=models.small_model, large=models.large_model, schema=SCHEMA_VERSION,

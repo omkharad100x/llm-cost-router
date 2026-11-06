@@ -83,6 +83,9 @@ llm-cost-router/
 ├── evaluate_similarity.py      # Offline pairwise evaluation runner
 ├── evaluation/                 # Labeled pairs, vectors, and benchmark_fixtures.json
 ├── cache_schema.py             # SQLite schema and transactional migration
+├── database_config.py          # Explicit environment-based SQLite settings
+├── database.py                 # Guarded cache opening and read-only verification
+├── database_admin.py           # Explicit initialize/verify commands
 ├── cache_config.py             # Validated semantic threshold defaults
 ├── semantic_cache.py           # Persistent SQLite cache and eligibility
 ├── requirements.txt            # Pinned runtime dependencies
@@ -1203,3 +1206,17 @@ Run the offline checks from the repository root:
 Task 6 adds isolation and fault-injection tests, not production reliability
 statistics. Dashboard failure counts remain unavailable without a measured
 source. Existing synthetic benchmark reports retain their original run snapshots.
+
+
+## Production database configuration (Day 3, Task 7)
+
+The selected MVP target is one server with a persistent local disk. The
+environment-configured SQLite factory supports explicit initialization,
+existing-file-only production opening, bounded lock waits and read-only schema
+and integrity verification. No production connection or deployment is claimed.
+
+See [database configuration and migration guidance](docs/database.md) for
+environment variables, Windows/Linux paths, safe setup commands, connection
+lifecycle, PostgreSQL tradeoffs, backups and deployment requirements. System
+Information displays configuration validity separately from its **Not probed**
+connection status. Existing direct SQLite callers and offline tests keep working.

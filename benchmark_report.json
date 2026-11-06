@@ -10,7 +10,8 @@
     }
   },
   "implementation_sha256": {
-    "benchmarks.py": "88862469d5dc291d377ba2086403c5d661bb7e22345b1ab83f6028e543c73580",
+    "benchmarks.py": "b96a46b9aac148ae44533b964044da7f1819f4a4b35c102ea0e3ee8e25ba2072",
+    "latency_quality.py": "051e60d677706f59af05944bba0b33c33a3a7d11ec8d245c5e30e71fa2504e58",
     "money.py": "ac39e6e971965dda51fe3b27a5b1114ae8405ce06e16984ade848122e6f21b26",
     "benchmark_accounting.py": "d800ceda8c229d401ad66499dd0fd95cbd7cf1a5d20e2b8ecee1d789dd62a60e",
     "cost_comparison.py": "3cfedae8ccef4422b2907cdeece76b0c35b5c466e0be3d3c9f83acac1db5ed96",
@@ -1187,8 +1188,8 @@
         "repeat_hits_after_first_lookup": 19
       },
       "latency": {
-        "total_lookup_ms": 39.578700001584366,
-        "average_lookup_ms": 0.8995159091269174,
+        "total_lookup_ms": 22.762000029615592,
+        "average_lookup_ms": 0.5173181824912635,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1232,9 +1233,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 23.756599985063076,
-          "average_per_request_ms": 0.5656333329776922,
-          "average_per_query_ms": 1.0798454538665034,
+          "total_ms": 11.412999985623173,
+          "average_per_request_ms": 0.2717380948957898,
+          "average_per_query_ms": 0.5187727266192351,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1278,9 +1279,9 @@
               "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 21.475299981830176,
-              "average_per_request_ms": 1.0226333324681036,
-              "average_per_query_ms": 0.976149999174099,
+              "total_ms": 10.311899990483653,
+              "average_per_request_ms": 0.49104285668969777,
+              "average_per_query_ms": 0.468722726840166,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1324,9 +1325,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 2.2813000032329,
-              "average_per_request_ms": 0.10863333348728095,
-              "average_per_query_ms": 0.10369545469240454,
+              "total_ms": 1.1010999951395206,
+              "average_per_request_ms": 0.05243333310188193,
+              "average_per_query_ms": 0.05004999977906912,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1373,9 +1374,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 2.3997000098461285,
-          "average_per_request_ms": 0.049993750205127675,
-          "average_per_query_ms": 0.05453863658741201,
+          "total_ms": 1.6364000039175153,
+          "average_per_request_ms": 0.03409166674828157,
+          "average_per_query_ms": 0.037190909179943527,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1419,9 +1420,9 @@
               "total_tokens": 750
             },
             "latency": {
-              "total_ms": 0.5173000026843511,
-              "average_per_request_ms": 0.08621666711405851,
-              "average_per_query_ms": 0.01175681824282616,
+              "total_ms": 0.4662999926949851,
+              "average_per_request_ms": 0.07771666544916418,
+              "average_per_query_ms": 0.010597727106704207,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1465,9 +1466,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.8824000071617775,
-              "average_per_request_ms": 0.04481904778956613,
-              "average_per_query_ms": 0.04278181834458585,
+              "total_ms": 1.1701000112225302,
+              "average_per_request_ms": 0.02785952407672691,
+              "average_per_query_ms": 0.02659318207323932,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1513,9 +1514,9 @@
           "total_tokens": 750
         },
         "latency": {
-          "total_ms": 0.5173000026843511,
-          "average_per_request_ms": 0.08621666711405851,
-          "average_per_query_ms": 0.01175681824282616,
+          "total_ms": 0.4662999926949851,
+          "average_per_request_ms": 0.07771666544916418,
+          "average_per_query_ms": 0.010597727106704207,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1559,9 +1560,9 @@
               "total_tokens": 750
             },
             "latency": {
-              "total_ms": 0.5173000026843511,
-              "average_per_request_ms": 0.08621666711405851,
-              "average_per_query_ms": 0.01175681824282616,
+              "total_ms": 0.4662999926949851,
+              "average_per_request_ms": 0.07771666544916418,
+              "average_per_query_ms": 0.010597727106704207,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1607,9 +1608,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.8824000071617775,
-          "average_per_request_ms": 0.04481904778956613,
-          "average_per_query_ms": 0.04278181834458585,
+          "total_ms": 1.1701000112225302,
+          "average_per_request_ms": 0.02785952407672691,
+          "average_per_query_ms": 0.02659318207323932,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1653,9 +1654,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.8824000071617775,
-              "average_per_request_ms": 0.04481904778956613,
-              "average_per_query_ms": 0.04278181834458585,
+              "total_ms": 1.1701000112225302,
+              "average_per_request_ms": 0.02785952407672691,
+              "average_per_query_ms": 0.02659318207323932,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1907,8 +1908,8 @@
         "repeat_hits_after_first_lookup": 12
       },
       "latency": {
-        "total_lookup_ms": 39.48560001299484,
-        "average_lookup_ms": 0.8974000002953372,
+        "total_lookup_ms": 22.81500000390224,
+        "average_lookup_ms": 0.5185227273614146,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1952,9 +1953,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 2.94539998867549,
-          "average_per_request_ms": 0.07012857115894024,
-          "average_per_query_ms": 0.13388181766706772,
+          "total_ms": 2.1278999774949625,
+          "average_per_request_ms": 0.050664285178451486,
+          "average_per_query_ms": 0.09672272624977102,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1998,9 +1999,9 @@
               "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 2.1995999923092313,
-              "average_per_request_ms": 0.10474285677663006,
-              "average_per_query_ms": 0.0999818178322378,
+              "total_ms": 1.5517999927396886,
+              "average_per_request_ms": 0.07389523774950899,
+              "average_per_query_ms": 0.07053636330634948,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2044,9 +2045,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 0.7457999963662587,
-              "average_per_request_ms": 0.03551428554125041,
-              "average_per_query_ms": 0.03389999983482994,
+              "total_ms": 0.5760999847552739,
+              "average_per_request_ms": 0.027433332607393994,
+              "average_per_query_ms": 0.02618636294342154,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2093,9 +2094,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 4.070500028319657,
-          "average_per_request_ms": 0.06565322626322027,
-          "average_per_query_ms": 0.0925113642799922,
+          "total_ms": 2.4647000318509527,
+          "average_per_request_ms": 0.03975322632017666,
+          "average_per_query_ms": 0.05601590981479438,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2139,9 +2140,9 @@
               "total_tokens": 2500
             },
             "latency": {
-              "total_ms": 2.2175000194692984,
-              "average_per_request_ms": 0.11087500097346492,
-              "average_per_query_ms": 0.05039772771521133,
+              "total_ms": 1.32050000684103,
+              "average_per_request_ms": 0.0660250003420515,
+              "average_per_query_ms": 0.03001136379184159,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2185,9 +2186,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.8530000088503584,
-              "average_per_request_ms": 0.04411904782977044,
-              "average_per_query_ms": 0.04211363656478087,
+              "total_ms": 1.1442000250099227,
+              "average_per_request_ms": 0.027242857738331492,
+              "average_per_query_ms": 0.02600454602295279,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2233,9 +2234,9 @@
           "total_tokens": 2500
         },
         "latency": {
-          "total_ms": 2.2175000194692984,
-          "average_per_request_ms": 0.11087500097346492,
-          "average_per_query_ms": 0.05039772771521133,
+          "total_ms": 1.32050000684103,
+          "average_per_request_ms": 0.0660250003420515,
+          "average_per_query_ms": 0.03001136379184159,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2279,9 +2280,9 @@
               "total_tokens": 2500
             },
             "latency": {
-              "total_ms": 2.2175000194692984,
-              "average_per_request_ms": 0.11087500097346492,
-              "average_per_query_ms": 0.05039772771521133,
+              "total_ms": 1.32050000684103,
+              "average_per_request_ms": 0.0660250003420515,
+              "average_per_query_ms": 0.03001136379184159,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2327,9 +2328,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.8530000088503584,
-          "average_per_request_ms": 0.04411904782977044,
-          "average_per_query_ms": 0.04211363656478087,
+          "total_ms": 1.1442000250099227,
+          "average_per_request_ms": 0.027242857738331492,
+          "average_per_query_ms": 0.02600454602295279,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2373,9 +2374,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.8530000088503584,
-              "average_per_request_ms": 0.04411904782977044,
-              "average_per_query_ms": 0.04211363656478087,
+              "total_ms": 1.1442000250099227,
+              "average_per_request_ms": 0.027242857738331492,
+              "average_per_query_ms": 0.02600454602295279,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2627,8 +2628,8 @@
         "repeat_hits_after_first_lookup": 7
       },
       "latency": {
-        "total_lookup_ms": 29.840499999409076,
-        "average_lookup_ms": 0.6781931818047517,
+        "total_lookup_ms": 20.459899977140594,
+        "average_lookup_ms": 0.46499772675319534,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -2672,9 +2673,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 2.6336000009905547,
-          "average_per_request_ms": 0.06270476192834654,
-          "average_per_query_ms": 0.11970909095411612,
+          "total_ms": 1.9197999645257369,
+          "average_per_request_ms": 0.0457095229648985,
+          "average_per_query_ms": 0.08726363475116986,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2718,9 +2719,9 @@
               "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 1.9123000020044856,
-              "average_per_request_ms": 0.09106190485735646,
-              "average_per_query_ms": 0.08692272736384025,
+              "total_ms": 1.4141999854473397,
+              "average_per_request_ms": 0.06734285644987333,
+              "average_per_query_ms": 0.06428181752033363,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2764,9 +2765,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 0.7212999989860691,
-              "average_per_request_ms": 0.034347618999336624,
-              "average_per_query_ms": 0.03278636359027587,
+              "total_ms": 0.5055999790783972,
+              "average_per_request_ms": 0.024076189479923675,
+              "average_per_query_ms": 0.022981817230836234,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2813,9 +2814,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 4.421300021931529,
-          "average_per_request_ms": 0.061406944749049015,
-          "average_per_query_ms": 0.10048409140753475,
+          "total_ms": 3.235599971958436,
+          "average_per_request_ms": 0.04493888849942272,
+          "average_per_query_ms": 0.07353636299905536,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2859,9 +2860,9 @@
               "total_tokens": 3750
             },
             "latency": {
-              "total_ms": 2.8117000038037077,
-              "average_per_request_ms": 0.09372333346012358,
-              "average_per_query_ms": 0.06390227281372063,
+              "total_ms": 2.0901999887428246,
+              "average_per_request_ms": 0.06967333295809415,
+              "average_per_query_ms": 0.04750454519870056,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2905,9 +2906,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.6096000181278214,
-              "average_per_request_ms": 0.038323809955424316,
-              "average_per_query_ms": 0.036581818593814125,
+              "total_ms": 1.1453999832156114,
+              "average_per_request_ms": 0.027271428171800272,
+              "average_per_query_ms": 0.026031817800354805,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2953,9 +2954,9 @@
           "total_tokens": 3750
         },
         "latency": {
-          "total_ms": 2.8117000038037077,
-          "average_per_request_ms": 0.09372333346012358,
-          "average_per_query_ms": 0.06390227281372063,
+          "total_ms": 2.0901999887428246,
+          "average_per_request_ms": 0.06967333295809415,
+          "average_per_query_ms": 0.04750454519870056,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2999,9 +3000,9 @@
               "total_tokens": 3750
             },
             "latency": {
-              "total_ms": 2.8117000038037077,
-              "average_per_request_ms": 0.09372333346012358,
-              "average_per_query_ms": 0.06390227281372063,
+              "total_ms": 2.0901999887428246,
+              "average_per_request_ms": 0.06967333295809415,
+              "average_per_query_ms": 0.04750454519870056,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -3047,9 +3048,9 @@
           "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.6096000181278214,
-          "average_per_request_ms": 0.038323809955424316,
-          "average_per_query_ms": 0.036581818593814125,
+          "total_ms": 1.1453999832156114,
+          "average_per_request_ms": 0.027271428171800272,
+          "average_per_query_ms": 0.026031817800354805,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -3093,9 +3094,9 @@
               "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.6096000181278214,
-              "average_per_request_ms": 0.038323809955424316,
-              "average_per_query_ms": 0.036581818593814125,
+              "total_ms": 1.1453999832156114,
+              "average_per_request_ms": 0.027271428171800272,
+              "average_per_query_ms": 0.026031817800354805,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -3613,9 +3614,9 @@
         "total_tokens": null
       },
       "latency": {
-        "total_ms": 0.6365999797708355,
-        "average_per_request_ms": 0.05304999831423629,
-        "average_per_query_ms": 0.07957499747135444,
+        "total_ms": 0.5099000118207186,
+        "average_per_request_ms": 0.04249166765172655,
+        "average_per_query_ms": 0.06373750147758983,
         "source": "measured local mock SDK call overhead; not provider latency"
       },
       "by_model": {
@@ -3660,9 +3661,9 @@
             "total_tokens": null
           },
           "latency": {
-            "total_ms": 0.3383999865036458,
-            "average_per_request_ms": 0.05639999775060763,
-            "average_per_query_ms": 0.04229999831295572,
+            "total_ms": 0.28020000900141895,
+            "average_per_request_ms": 0.04670000150023649,
+            "average_per_query_ms": 0.03502500112517737,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         },
@@ -3706,9 +3707,9 @@
             "total_tokens": 750
           },
           "latency": {
-            "total_ms": 0.2981999932671897,
-            "average_per_request_ms": 0.04969999887786495,
-            "average_per_query_ms": 0.037274999158398714,
+            "total_ms": 0.2297000028192997,
+            "average_per_request_ms": 0.038283333803216614,
+            "average_per_query_ms": 0.028712500352412462,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         }
@@ -3799,7 +3800,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.21069999638712034
+          },
+          "optimized": {
+            "end_to_end_ms": 4.583800000546034,
+            "cache_lookup_ms": 0.43449999793665484,
+            "embedding_ms": 0.04340000305091962,
+            "small_generation_ms": 0.05420000525191426,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": "pass",
+          "optimized": "pass"
+        }
       },
       {
         "id": "0:escalation_pass",
@@ -3894,7 +3913,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.26760000037029386
+          },
+          "optimized": {
+            "end_to_end_ms": 4.603300003509503,
+            "cache_lookup_ms": 0.5266000007395633,
+            "embedding_ms": 0.052600000344682485,
+            "small_generation_ms": 0.06649999704677612,
+            "large_generation_ms": 0.04050000279676169,
+            "escalation_ms": 0.3358000030857511
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": "fail",
+          "optimized": "pass"
+        }
       },
       {
         "id": "0:both_fail_second_better",
@@ -3974,7 +4011,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.16229999891947955
+          },
+          "optimized": {
+            "end_to_end_ms": 0.8605000039096922,
+            "cache_lookup_ms": 0.49500000022817403,
+            "embedding_ms": 0.021599997126031667,
+            "small_generation_ms": 0.06259999645408243,
+            "large_generation_ms": 0.03930000093532726,
+            "escalation_ms": 0.2890999967348762
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "0:both_fail_tie",
@@ -4054,7 +4109,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.0897999998414889
+          },
+          "optimized": {
+            "end_to_end_ms": 0.7306000043172389,
+            "cache_lookup_ms": 0.4169000021647662,
+            "embedding_ms": 0.019099999917671084,
+            "small_generation_ms": 0.05270000110613182,
+            "large_generation_ms": 0.03760000254260376,
+            "escalation_ms": 0.24880000273697078
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "0:both_fail_initial_better",
@@ -4096,7 +4169,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.08440000237897038
+          },
+          "optimized": {
+            "end_to_end_ms": 0.4809000020031817,
+            "cache_lookup_ms": 0.4743000026792288,
+            "embedding_ms": 0.01809999957913533,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": null,
+          "optimized": "pass"
+        }
       },
       {
         "id": "0:complex_pass",
@@ -4172,7 +4263,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.12229999992996454
+          },
+          "optimized": {
+            "end_to_end_ms": 3.9850000030128285,
+            "cache_lookup_ms": 0.3304999991087243,
+            "embedding_ms": 0.03710000601131469,
+            "small_generation_ms": null,
+            "large_generation_ms": 0.05080000119050965,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": "pass",
+          "optimized": "pass"
+        }
       },
       {
         "id": "0:complex_fail",
@@ -4233,7 +4342,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "initial"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.1688999982434325
+          },
+          "optimized": {
+            "end_to_end_ms": 0.8424000043305568,
+            "cache_lookup_ms": 0.5725000009988435,
+            "embedding_ms": 0.02269999822601676,
+            "small_generation_ms": null,
+            "large_generation_ms": 0.06329999450827017,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "0:missing_usage",
@@ -4309,7 +4436,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.09159999899566174
+          },
+          "optimized": {
+            "end_to_end_ms": 4.206600002362393,
+            "cache_lookup_ms": 0.3761999978451058,
+            "embedding_ms": 0.039200000173877925,
+            "small_generation_ms": 0.03240000660298392,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": "pass",
+          "optimized": "pass"
+        }
       },
       {
         "id": "1:simple_pass",
@@ -4351,7 +4496,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.2268999960506335
+          },
+          "optimized": {
+            "end_to_end_ms": 0.745400000596419,
+            "cache_lookup_ms": 0.7370000021182932,
+            "embedding_ms": 0.026599998818710446,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": null,
+          "optimized": "pass"
+        }
       },
       {
         "id": "1:escalation_pass",
@@ -4393,7 +4556,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.14209999790182337
+          },
+          "optimized": {
+            "end_to_end_ms": 0.5397000059019774,
+            "cache_lookup_ms": 0.534200000402052,
+            "embedding_ms": 0.03840000135824084,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": null,
+          "optimized": "pass"
+        }
       },
       {
         "id": "1:both_fail_second_better",
@@ -4473,7 +4654,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.12769999739248306
+          },
+          "optimized": {
+            "end_to_end_ms": 0.724199999240227,
+            "cache_lookup_ms": 0.3947000004700385,
+            "embedding_ms": 0.020300001779105514,
+            "small_generation_ms": 0.04939999780617654,
+            "large_generation_ms": 0.036600002204068005,
+            "escalation_ms": 0.2673999988473952
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "1:both_fail_tie",
@@ -4553,7 +4752,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.09479999425821006
+          },
+          "optimized": {
+            "end_to_end_ms": 0.8328999974764884,
+            "cache_lookup_ms": 0.47590000031050295,
+            "embedding_ms": 0.018600003386382014,
+            "small_generation_ms": 0.06669999856967479,
+            "large_generation_ms": 0.03599999763537198,
+            "escalation_ms": 0.27550000231713057
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "1:both_fail_initial_better",
@@ -4595,7 +4812,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.08299999899463728
+          },
+          "optimized": {
+            "end_to_end_ms": 0.5000999954063445,
+            "cache_lookup_ms": 0.4944000029354356,
+            "embedding_ms": 0.01819999306462705,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": null,
+          "optimized": "pass"
+        }
       },
       {
         "id": "1:complex_pass",
@@ -4637,7 +4872,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.1176999940071255
+          },
+          "optimized": {
+            "end_to_end_ms": 0.46149999980116263,
+            "cache_lookup_ms": 0.4560000015771948,
+            "embedding_ms": 0.0168999977177009,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": null,
+          "optimized": "pass"
+        }
       },
       {
         "id": "1:complex_fail",
@@ -4698,7 +4951,25 @@
             "output_cost_usd": "0.00009375",
             "phase": "initial"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.10849999671336263
+          },
+          "optimized": {
+            "end_to_end_ms": 0.6410999994841404,
+            "cache_lookup_ms": 0.41679999412735924,
+            "embedding_ms": 0.01769999653333798,
+            "small_generation_ms": null,
+            "large_generation_ms": 0.04999999509891495,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "fail",
+          "initial": "fail",
+          "optimized": "fail"
+        }
       },
       {
         "id": "1:missing_usage",
@@ -4740,7 +5011,25 @@
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
           }
-        ]
+        ],
+        "timing": {
+          "baseline": {
+            "end_to_end_ms": 0.09090000094147399
+          },
+          "optimized": {
+            "end_to_end_ms": 0.4712999943876639,
+            "cache_lookup_ms": 0.46639999345643446,
+            "embedding_ms": 0.017700003809295595,
+            "small_generation_ms": null,
+            "large_generation_ms": null,
+            "escalation_ms": null
+          }
+        },
+        "quality": {
+          "baseline": "pass",
+          "initial": null,
+          "optimized": "pass"
+        }
       }
     ]
   },

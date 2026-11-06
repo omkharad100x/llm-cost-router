@@ -83,7 +83,7 @@ def test_every_section_renders_without_exception(app, section):
     assert not app.exception
     expected = "Workspace overview" if section == "Overview" else section
     assert app.title[0].value == expected
-    if section in ui.SECTION_DETAILS:
+    if section in ui.SECTION_DETAILS and section != "Performance":
         assert "coming next" in html(app)
         assert not app.metric  # Detailed performance metrics belong to Task 2.
 

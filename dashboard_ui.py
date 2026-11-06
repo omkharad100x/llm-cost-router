@@ -340,6 +340,54 @@ def _cost_analysis(source, runtime):
           "Historical savings are unavailable. Live measurements require a connected request source.")
 
 
+def _performance(benchmark, runtime):
+    st.title("Performance")
+    st.write("Measured local benchmark timing and heuristic answer quality.")
+    perf=(benchmark.analytics or {}).get("performance")
+    if perf is None:
+        st.info("Paired timing and quality observations are unavailable. Regenerate the offline benchmark report.")
+        return
+    st.caption("Synthetic benchmark · mocked SDK execution in milliseconds; not provider latency.")
+    def shown(value):
+        return None if value is None else f"{value:.3f} ms"
+    st.subheader("Paired end-to-end request latency")
+    for label,key in (("Baseline","baseline"),("Optimized","optimized")):
+        stats=perf[key]
+        _metric_cards([(label+" average",shown(stats["average_ms"]),"All paired queries"),
+                       (label+" P50",shown(stats["p50_ms"]),"Nearest rank"),
+                       (label+" P95",shown(stats["p95_ms"]),"Nearest rank"),
+                       (label+" P99",shown(stats["p99_ms"]),"Nearest rank"),
+                       (label+" minimum",shown(stats["min_ms"]),"Observed minimum"),
+                       (label+" maximum",shown(stats["max_ms"]),"Observed maximum")])
+    _metric_cards([("Latency regression" if perf["improvement_ms"] is not None and perf["improvement_ms"] < 0 else "Latency improvement",shown(abs(perf["improvement_ms"])) if perf["improvement_ms"] is not None else None,"Baseline minus optimized; unavailable when incomplete or unsafe"),
+                   ("Safe cache-hit latency",shown(perf["cache_hit"]["average_ms"]),"Reviewed cache reuse"),
+                   ("Cache lookup",shown(perf["cache_lookup"]["average_ms"]),"Local lookup including embeddings"),
+                   ("Embedding SDK",shown(perf["embedding"]["average_ms"]),"Instrumented mock calls"),
+                   ("Small generation",shown(perf["small_generation"]["average_ms"]),"Instrumented mock calls"),
+                   ("Large generation",shown(perf["large_generation"]["average_ms"]),"Instrumented mock calls"),
+                   ("Escalation overhead",shown(perf["escalation"]["average_ms"]),"Second attempt and local evaluation")])
+    st.subheader("Heuristic answer quality")
+    _metric_cards([("Baseline pass rate",_percent(perf["baseline_quality"]["pass_rate"]),"Large model fixture answers"),
+                   ("Optimized pass rate",_percent(perf["optimized_quality"]["pass_rate"]),"Final answers including cache hits"),
+                   ("Initial acceptance",_percent(perf["initial_quality"]["pass_rate"]),"Generated first attempts"),
+                   ("Escalation success",_percent(perf["escalation_quality"]["pass_rate"]),"Triggered second attempts")])
+    _metric_cards([("Evaluated answers",perf["optimized_quality"]["total"],"Optimized final responses"),
+                   ("Passed answers",perf["optimized_quality"]["passed"],"Heuristic decisions"),
+                   ("Failed answers",perf["optimized_quality"]["failed"],"Heuristic decisions"),
+                   ("Escalations",perf["escalation_count"],"Triggered second attempts")])
+    st.caption("Quality scores are deterministic heuristics. They do not verify factual correctness.")
+    st.subheader("Historical request latency")
+    st.caption("Historical source · "+STATUS_TEXT[runtime.status]+". Request logs lack paired quality decisions.")
+    records=(runtime.analytics or {}).get("records")
+    if records is not None:
+        from latency_quality import latency_stats
+        values=[r["latency_ms"] for r in records if r["latency_ms"] is not None]
+        h=latency_stats(values)
+        _metric_cards([("Average",shown(h["average_ms"]),"Historical API requests"),
+                       ("P50",shown(h["p50_ms"]),"Historical API requests"),
+                       ("P95",shown(h["p95_ms"]),"Historical API requests"),
+                       ("P99",shown(h["p99_ms"]),"Historical API requests")])
+
 def _analytics(section, benchmark, runtime):
     description, title, body, coverage = SECTION_DETAILS[section]
     st.title(section)
@@ -439,6 +487,8 @@ def render_dashboard():
         _routing_analytics(benchmark, runtime)
     elif section == "Cost Analysis":
         _cost_analysis(benchmark, runtime)
+    elif section == "Performance":
+        _performance(benchmark, runtime)
     elif section == "System Information":
         _system_info(benchmark, runtime)
     else:

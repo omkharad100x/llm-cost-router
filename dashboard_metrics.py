@@ -7,6 +7,7 @@ from benchmark_accounting import summarize_requests
 from money import amount, multiply, cost_display
 
 from cost_comparison import project_comparison
+from latency_quality import project_latency_quality
 
 
 def _group(obj, key):
@@ -126,6 +127,7 @@ def benchmark_metrics(report):
         raise ValueError("Accepted initial answers cannot also be escalated.")
     return dict(cache=sorted((_cache(c) for c in report["cache_benchmarks"]), key=lambda c: c["t"]),
                 comparison=project_comparison(report.get("cost_comparison")),
+                performance=project_latency_quality(report.get("cost_comparison")),
                 queries=queries, simple=simple, complex=complex_count, small=small, large=large,
                 attempts=attempt_counts, final=_final_roles(pipeline, queries),
                 escalations=escalations, successes=successes, accepted=accepted,

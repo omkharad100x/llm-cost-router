@@ -26,6 +26,7 @@ type CostComparison = {status: "missing" | "invalid"; issues: string[]} | {
 };
 type Benchmark = {
   comparison: CostComparison;
+  performance: any;
   cache: Cache[]; queries: number; small: Count; large: Count; simple: Count; complex: Count;
   attempts: Roles; final: Roles; escalations: Count; successes: Count; accepted: Count; passed: Count;
   escalationRate: Count; successRate: Count; acceptanceRate: Count;

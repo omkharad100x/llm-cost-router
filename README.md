@@ -1106,3 +1106,28 @@ internal test event loop. Browser verification covers desktop and phone layouts.
 The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional performance analytics, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.
+
+## Paired latency and heuristic quality benchmark
+
+Task 5 extends the existing paired 16-query synthetic workload. Each baseline
+request measures one direct large-model mock call. Each optimized request measures
+cache lookup, optional generation, routing, evaluation, escalation, and storage.
+Instrumented SDK call durations identify embedding and small/large generation
+components; outer timers capture complete local request processing. Cache lookup
+includes embedding, SQLite and similarity work, so components must not be summed
+as independent end-to-end durations.
+
+The saved report contains per-query timing and quality decisions. The Performance
+sections in Streamlit and React show average, P50, P95, P99, minimum and maximum
+where available, plus paired improvement, cache-hit time, model-call components,
+escalation, and heuristic pass rates. Percentiles use nearest rank. A missing
+timing withholds a complete scenario comparison. Unsafe cache reuse withholds
+the improvement claim. Older reports show unavailable rather than zero.
+
+These timings measure **local mock execution**, not Gemini network latency.
+Wall-clock results vary between runs; fixture decisions and counts are
+deterministic. Baseline quality is evaluated after baseline timing. Heuristic
+pass rates do not establish factual correctness. Historical request latency
+remains separate and has no paired quality or baseline evidence. Generate a
+fresh report with `python -B benchmarks.py --output NEW_REPORT.json` and review
+it before using it as the dashboard source.

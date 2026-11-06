@@ -16,6 +16,8 @@ from types import SimpleNamespace
 
 from google.genai import types
 
+from answer_evaluator import evaluate_answer
+from latency_quality import project_latency_quality
 from benchmark_accounting import summarize_requests
 from cache_config import DEFAULT_CONFIG, validate_threshold
 from cache_schema import SCHEMA_VERSION
@@ -403,12 +405,21 @@ def benchmark_cost_comparison(fixtures, pricing, config):
                     query = case["query"]
                     review = reviews[case["id"]]
                     eligibility = QueryEligibility(query=query, **review["query_flags"])
+                    baseline_started = time.perf_counter()
                     start = len(records)
-                    models.generate(query, role="large")
+                    base_response = models.generate(query, role="large")
                     baseline = captured(start, "baseline")
+                    baseline_elapsed = (time.perf_counter()-baseline_started)*1000
+                    base_quality = evaluate_answer(query, base_response.text, config=config.evaluation).decision
+                    optimized_started = time.perf_counter()
                     start = len(records)
+                    lookup_started = time.perf_counter()
                     lookup = cache.lookup(query, eligibility=eligibility)
+                    lookup_elapsed = (time.perf_counter()-lookup_started)*1000
+                    lookup_records = records[start:]
                     optimized = captured(start, "embedding")
+                    initial_quality = None
+                    escalation_elapsed = None
                     outcome = "miss"
                     if lookup.hit:
                         matched_group = groups.get(lookup.matched_query)
@@ -416,7 +427,12 @@ def benchmark_cost_comparison(fixtures, pricing, config):
                                    "safe_hit" if matched_group == review["equivalence_group"] else "false_hit")
                     else:
                         start = len(records)
+                        generation_started = time.perf_counter()
                         result = pipeline.generate(query)
+                        generation_elapsed = (time.perf_counter()-generation_started)*1000
+                        initial_quality = result.attempts[0].evaluation.decision
+                        if result.escalated:
+                            escalation_elapsed = generation_elapsed - (records[start]["latency_ms"] or 0)
                         generation = captured(start, "initial")
                         if len(generation) != result.total_attempts:
                             raise ValueError("Comparison instrumentation missed an attempt.")
@@ -431,8 +447,26 @@ def benchmark_cost_comparison(fixtures, pricing, config):
                             cache.save(query, response.text, response.model, eligibility=eligibility,
                                        response_eligibility=ResponseEligibility(**approval))
                             optimized.extend(captured(start, "embedding"))
+                    optimized_elapsed = (time.perf_counter()-optimized_started)*1000
+                    optimized_records = records[len(records)-len(optimized):] if optimized else []
+                    # Component timings come from the same recorded SDK calls. The outer
+                    # measurements additionally include local Python, cache and evaluator work.
                     observations.append(dict(id=f"{repeat}:{case['id']}", cache_outcome=outcome,
-                                             baseline=baseline, optimized=optimized))
+                                             baseline=baseline, optimized=optimized,
+                                             timing=dict(
+                                                 baseline=dict(end_to_end_ms=baseline_elapsed),
+                                                 optimized=dict(
+                                                     end_to_end_ms=optimized_elapsed,
+                                                     cache_lookup_ms=lookup_elapsed,
+                                                     embedding_ms=sum(r["latency_ms"] for r in optimized_records if r["request_kind"]=="embedding"),
+                                                     small_generation_ms=sum(r["latency_ms"] for r in optimized_records if r["request_kind"]=="small_model") if any(r["request_kind"]=="small_model" for r in optimized_records) else None,
+                                                     large_generation_ms=sum(r["latency_ms"] for r in optimized_records if r["request_kind"]=="large_model") if any(r["request_kind"]=="large_model" for r in optimized_records) else None,
+                                                     escalation_ms=escalation_elapsed)),
+                                             quality=dict(
+                                                 baseline=base_quality,
+                                                 initial=initial_quality,
+                                                 optimized=evaluate_answer(query, lookup.response, config=config.evaluation).decision
+                                                 if lookup.hit else result.final_evaluation.decision)))
     return dict(schema_version=1, methodology="paired-routing-fixtures-v1",
                 threshold=DEFAULT_CONFIG.similarity_threshold,
                 models=dict(small=config.models.small_model, large=config.models.large_model, embedding=MODEL),
@@ -464,7 +498,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
         "implementation_sha256": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in (
-                "benchmarks.py", "money.py", "benchmark_accounting.py", "cost_comparison.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
+                "benchmarks.py", "latency_quality.py", "money.py", "benchmark_accounting.py", "cost_comparison.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
                 "semantic_similarity.py", "embeddings.py", "evaluate_similarity.py",
                 "model_router.py", "gemini_models.py", "model_config.py", "instrumentation.py",
                 "query_complexity.py", "complexity_config.py", "answer_evaluator.py",

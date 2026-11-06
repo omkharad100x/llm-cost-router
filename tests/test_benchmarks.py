@@ -50,7 +50,7 @@ def record(model="gemini-small", cost="0.2", status="estimated", tokens=10, late
 
 def without_timings(value):
     if isinstance(value, dict):
-        return {key: without_timings(item) for key, item in value.items() if key != "latency"}
+        return {key: without_timings(item) for key, item in value.items() if key not in ("latency","timing")}
     if isinstance(value, (list, tuple)):
         return [without_timings(item) for item in value]
     return value

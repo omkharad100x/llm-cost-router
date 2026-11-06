@@ -1,6 +1,7 @@
 """Streamlit presentation only; analytics and model calls remain separate."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from html import escape
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -25,14 +26,6 @@ STATUS_TEXT = {
     "invalid": "Needs attention", "unreadable": "Unavailable", "too_large": "Limit reached",
 }
 SECTION_DETAILS = {
-    "Cost Analysis": (
-        "Keep estimated spend, missing pricing, and token usage visible.",
-        "Cost analytics are coming next",
-        "Task 2 will separate complete estimates from partial subtotals. "
-        "Unknown pricing and missing usage will remain unavailable, never zero.",
-        (("Cost coverage", "Distinguish known estimates from requests without usable pricing."),
-         ("Per-model accounting", "Separate generation and embedding costs by source and model.")),
-    ),
     "Performance": (
         "Separate cache lookup time from generation time and local mock overhead.",
         "Performance analytics are coming next",
@@ -252,6 +245,76 @@ def _routing_analytics(source, runtime):
           "omit query classifications, attempt links, quality decisions and final selections.")
 
 
+def _usd(value):
+    return None if value is None else f"$\u2009{Decimal(value):,.8f}"
+
+
+def _cost_analysis(source, runtime):
+    st.title("Cost Analysis")
+    comparison = (source.analytics or {}).get("comparison", {})
+    if comparison.get("status") != "ready":
+        st.info(" ".join(comparison.get("issues", ["The benchmark report is unavailable."])))
+        _metric_cards([(name, None, "Paired benchmark required") for name in
+                       ("Baseline cost", "Optimized cost", "Estimated savings", "Savings percentage")])
+    else:
+        st.caption(f"Synthetic benchmark estimates · USD · {comparison['query_count']} paired queries · "
+                   f"cache threshold {comparison['threshold']}")
+        base, optimized = comparison["baseline"], comparison["optimized"]
+        _metric_cards([
+            ("Baseline cost", _usd(base["estimated_cost_usd"]), "One large-model generation per query"),
+            ("Optimized cost", _usd(optimized["estimated_cost_usd"]), "All generation and embedding attempts"),
+            ("Estimated savings", _usd(comparison["savings_usd"]), "Withheld for incomplete costs or unsafe reuse"),
+            ("Savings percentage", None if comparison["savings_percentage"] is None else
+             f"{Decimal(comparison['savings_percentage']):.2f}%", "Savings / baseline cost"),
+            ("Baseline cost per query", _usd(base["average_cost_per_query_usd"]), "All paired queries"),
+            ("Optimized cost per query", _usd(optimized["average_cost_per_query_usd"]), "Includes cache hits"),
+        ])
+        for issue in comparison["issues"]:
+            st.info(issue)
+        with st.container(border=True):
+            st.subheader("Scenario comparison")
+            st.caption("Generation calls include escalation. Safe cache hits avoid first generation calls.")
+            st.bar_chart({"Scenario": ["Baseline", "Optimized"],
+                          "Generation calls": [base["generation_calls"], optimized["generation_calls"]]},
+                         x="Scenario", y="Generation calls", color="#2a705b")
+            if base["complete"] and optimized["complete"]:
+                st.bar_chart({"Scenario": ["Baseline", "Optimized"],
+                              "Estimated USD": [float(base["estimated_cost_usd"]), float(optimized["estimated_cost_usd"])]},
+                             x="Scenario", y="Estimated USD", color="#2a705b")
+            else:
+                st.caption("The cost chart requires complete estimates for both scenarios.")
+        _metric_cards([
+            ("Baseline generation calls", base["generation_calls"], "One attempt per query"),
+            ("Optimized generation calls", optimized["generation_calls"], "Includes escalations"),
+            ("Safe generation calls avoided", comparison["safe_calls_avoided"], "Reviewed cache hits"),
+            ("Unsafe cache hits", comparison["cache_outcomes"]["false_hit"], "Blocks all monetary savings claims"),
+            ("Baseline known subtotal", _usd(base["known_cost_subtotal_usd"]), f'{base["unknown_cost_requests"]} unpriced requests'),
+            ("Optimized known subtotal", _usd(optimized["known_cost_subtotal_usd"]), f'{optimized["unknown_cost_requests"]} unpriced requests'),
+            ("Escalation expenditure", _usd(comparison["escalation"]["estimated_cost_usd"]),
+             "Known subtotal " + _usd(comparison["escalation"]["known_cost_subtotal_usd"])),
+            ("Embedding expenditure", _usd(comparison["embedding"]["estimated_cost_usd"]),
+             "Includes lookup and cache storage; known subtotal " + _usd(comparison["embedding"]["known_cost_subtotal_usd"])),
+        ])
+        st.subheader("Cost by model")
+        st.table([{"Model": row["model"], "Scenario": name.title(),
+                   "Estimated USD": _usd(row[name]["estimated_cost_usd"]) or "Unavailable",
+                   "Known subtotal USD": _usd(row[name]["known_cost_subtotal_usd"]),
+                   "Unpriced requests": row[name]["unknown_cost_requests"]}
+                  for row in comparison["by_model"] for name in ("baseline", "optimized")], hide_index=True)
+        with st.expander("Comparison methodology"):
+            st.write("Both scenarios process the same ordered routing fixtures. Each role uses its own "
+                     "synthetic response and token-usage fixture, including thinking tokens. "
+                     "The optimized run starts with an empty cache and records lookup, storage, generation "
+                     "and escalation costs. Query and response eligibility are explicitly reviewed.")
+            st.write("Saved attempts use the pricing snapshot from the benchmark run. Missing rates or "
+                     "usage withhold totals. False or unreviewed cache hits withhold savings even when costs "
+                     "are complete. Synthetic vectors and responses do not establish production quality or savings.")
+    st.subheader("Historical and live comparison")
+    st.caption("Historical source · " + STATUS_TEXT[runtime.status])
+    _note("Historical request logs lack a paired large-model baseline and linked cache decisions. "
+          "Historical savings are unavailable. Live measurements require a connected request source.")
+
+
 def _analytics(section, benchmark, runtime):
     description, title, body, coverage = SECTION_DETAILS[section]
     st.title(section)
@@ -349,6 +412,8 @@ def render_dashboard():
         _cache_analytics(benchmark)
     elif section == "Model Routing":
         _routing_analytics(benchmark, runtime)
+    elif section == "Cost Analysis":
+        _cost_analysis(benchmark, runtime)
     elif section == "System Information":
         _system_info(benchmark, runtime)
     else:

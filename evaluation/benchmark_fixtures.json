@@ -602,5 +602,212 @@
     "Token counts are explicit mock SDK fixtures, never inferred from text.",
     "Expected quality labels describe these test examples; they are not an independent factual-quality dataset.",
     "Embedding statistics are unavailable in the existing vector fixtures and remain null."
-  ]
+  ],
+  "comparison_cache_reviews": {
+    "simple_pass": {
+      "query": "What is a Python tuple?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "tuple",
+      "embedding": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": [
+        {
+          "response": "A Python tuple is an immutable sequence of items.",
+          "successful": true,
+          "not_safety_refusal": true,
+          "non_sensitive": true
+        }
+      ]
+    },
+    "escalation_pass": {
+      "query": "What is the capital of France?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "escalation_pass",
+      "embedding": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": [
+        {
+          "response": "Paris.",
+          "successful": true,
+          "not_safety_refusal": true,
+          "non_sensitive": true
+        }
+      ]
+    },
+    "both_fail_second_better": {
+      "query": "Define recursion.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "both_fail_second_better",
+      "embedding": [
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": []
+    },
+    "both_fail_tie": {
+      "query": "Calculate 2 + 2.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "both_fail_tie",
+      "embedding": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": []
+    },
+    "both_fail_initial_better": {
+      "query": "What is a tuple?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "tuple",
+      "embedding": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": []
+    },
+    "complex_pass": {
+      "query": "Write a Python function to add two numbers.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "complex_pass",
+      "embedding": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "response_reviews": [
+        {
+          "response": "def add(a, b):\n    return a + b",
+          "successful": true,
+          "not_safety_refusal": true,
+          "non_sensitive": true
+        }
+      ]
+    },
+    "complex_fail": {
+      "query": "Prove that the square root of 2 is irrational.",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "complex_fail",
+      "embedding": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "response_reviews": []
+    },
+    "missing_usage": {
+      "query": "How many sides does a triangle have?",
+      "query_flags": {
+        "context_independent": true,
+        "non_sensitive": true,
+        "time_independent": true,
+        "external_state_independent": true
+      },
+      "reason": "Reviewed public synthetic definition, arithmetic, or code task with no personal context or external-state dependency.",
+      "equivalence_group": "missing_usage",
+      "embedding": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "response_reviews": [
+        {
+          "response": "Three.",
+          "successful": true,
+          "not_safety_refusal": true,
+          "non_sensitive": true
+        }
+      ]
+    }
+  },
+  "comparison_source": "Offline paired routing-query workload; synthetic unit vectors and explicit cache eligibility reviews; each role uses its own existing response and usage fixture."
 }

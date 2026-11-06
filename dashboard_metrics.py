@@ -2,6 +2,8 @@
 
 import math
 
+from cost_comparison import project_comparison
+
 
 def _group(obj, key):
     value = obj.get(key)
@@ -119,6 +121,7 @@ def benchmark_metrics(report):
     if accepted is not None and escalations is not None and accepted + escalations > queries:
         raise ValueError("Accepted initial answers cannot also be escalated.")
     return dict(cache=sorted((_cache(c) for c in report["cache_benchmarks"]), key=lambda c: c["t"]),
+                comparison=project_comparison(report.get("cost_comparison")),
                 queries=queries, simple=simple, complex=complex_count, small=small, large=large,
                 attempts=attempt_counts, final=_final_roles(pipeline, queries),
                 escalations=escalations, successes=successes, accepted=accepted,

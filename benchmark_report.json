@@ -10,7 +10,9 @@
     }
   },
   "implementation_sha256": {
-    "benchmarks.py": "dfd86de28bb2dd41c74d9abd82f1fe64bce7230908b42a4403cc23230982090e",
+    "benchmarks.py": "483046b4aa8ebc979cdd2b0f20b0c7156cd455ca9d9a731b239e2802f62545d4",
+    "benchmark_accounting.py": "932f6e46efca1ae8a70c910920ada4a9fdfc47581e849dd345af663691ca3da7",
+    "cost_comparison.py": "02b34a520832d2b9c74923eb7f135192fe06acbd8df976524177c0999441f6a9",
     "semantic_cache.py": "f54ac174ac67e759d64d46622c966df794d5d15800a47a14aae27f71d21d7b9f",
     "cache_schema.py": "5869d69fb1cd2a889edbc06f9823b688908f32d666e424497c1e805818c82206",
     "cache_config.py": "426909b5d0c5eef5bf3e8235a711cb0072b3c4091ba26c4f538128b1b31ea194",
@@ -145,7 +147,7 @@
     "sha256": {
       "pairs": "55b1e89092825afce319464e45f26561d53284a0db031d66f0dfbfd8bb73fbc4",
       "embeddings": "134374f80404ba6d7995dbe2226c2e49becd274da60a4bf6a1e6d5dca2f589b4",
-      "fixtures": "0f8b320e5acda5543514030b46536e9d60317c756fb4258d7c9da6b592f0f4f9",
+      "fixtures": "5f6514fc4405cc88302e8d903063e16917634281313ccb911e1a7aa7a482c313",
       "pricing": "f5d21837662db041c549d3c10872a731bb8698c93b48399383f59a477c317998"
     }
   },
@@ -1168,8 +1170,8 @@
         "repeat_hits_after_first_lookup": 19
       },
       "latency": {
-        "total_lookup_ms": 25.507099999998673,
-        "average_lookup_ms": 0.579706818181788,
+        "total_lookup_ms": 22.624699999596487,
+        "average_lookup_ms": 0.5141977272635565,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1193,9 +1195,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 20.088500000014164,
-          "average_per_request_ms": 0.4782976190479563,
-          "average_per_query_ms": 0.9131136363642802,
+          "total_ms": 11.295199997675809,
+          "average_per_request_ms": 0.26893333327799546,
+          "average_per_query_ms": 0.5134181817125367,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1219,9 +1221,9 @@
               "billed_output_tokens": 525
             },
             "latency": {
-              "total_ms": 18.809900000093194,
-              "average_per_request_ms": 0.8957095238139616,
-              "average_per_query_ms": 0.8549954545496906,
+              "total_ms": 10.184899998876062,
+              "average_per_request_ms": 0.48499523804171724,
+              "average_per_query_ms": 0.46294999994891195,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1245,9 +1247,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.2785999999209707,
-              "average_per_request_ms": 0.060885714281950984,
-              "average_per_query_ms": 0.05811818181458958,
+              "total_ms": 1.1102999987997464,
+              "average_per_request_ms": 0.052871428514273636,
+              "average_per_query_ms": 0.05046818176362484,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1274,9 +1276,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 1.6446999999857326,
-          "average_per_request_ms": 0.03426458333303609,
-          "average_per_query_ms": 0.037379545454221196,
+          "total_ms": 1.4910000004419999,
+          "average_per_request_ms": 0.031062500009208332,
+          "average_per_query_ms": 0.03388636364640909,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1300,9 +1302,9 @@
               "billed_output_tokens": 150
             },
             "latency": {
-              "total_ms": 0.3963000000339889,
-              "average_per_request_ms": 0.06605000000566481,
-              "average_per_query_ms": 0.009006818182590658,
+              "total_ms": 0.34970000024259207,
+              "average_per_request_ms": 0.058283333373765345,
+              "average_per_query_ms": 0.007947727278240729,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1326,9 +1328,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.2483999999517437,
-              "average_per_request_ms": 0.029723809522660564,
-              "average_per_query_ms": 0.028372727271630538,
+              "total_ms": 1.1413000001994078,
+              "average_per_request_ms": 0.02717380952855733,
+              "average_per_query_ms": 0.025938636368168358,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1354,9 +1356,9 @@
           "billed_output_tokens": 150
         },
         "latency": {
-          "total_ms": 0.3963000000339889,
-          "average_per_request_ms": 0.06605000000566481,
-          "average_per_query_ms": 0.009006818182590658,
+          "total_ms": 0.34970000024259207,
+          "average_per_request_ms": 0.058283333373765345,
+          "average_per_query_ms": 0.007947727278240729,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1380,9 +1382,9 @@
               "billed_output_tokens": 150
             },
             "latency": {
-              "total_ms": 0.3963000000339889,
-              "average_per_request_ms": 0.06605000000566481,
-              "average_per_query_ms": 0.009006818182590658,
+              "total_ms": 0.34970000024259207,
+              "average_per_request_ms": 0.058283333373765345,
+              "average_per_query_ms": 0.007947727278240729,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1408,9 +1410,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 1.2483999999517437,
-          "average_per_request_ms": 0.029723809522660564,
-          "average_per_query_ms": 0.028372727271630538,
+          "total_ms": 1.1413000001994078,
+          "average_per_request_ms": 0.02717380952855733,
+          "average_per_query_ms": 0.025938636368168358,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1434,9 +1436,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.2483999999517437,
-              "average_per_request_ms": 0.029723809522660564,
-              "average_per_query_ms": 0.028372727271630538,
+              "total_ms": 1.1413000001994078,
+              "average_per_request_ms": 0.02717380952855733,
+              "average_per_query_ms": 0.025938636368168358,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1688,8 +1690,8 @@
         "repeat_hits_after_first_lookup": 12
       },
       "latency": {
-        "total_lookup_ms": 27.631200000030276,
-        "average_lookup_ms": 0.6279818181825063,
+        "total_lookup_ms": 19.421900000907044,
+        "average_lookup_ms": 0.4414068182024328,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1713,9 +1715,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 2.30969999998365,
-          "average_per_request_ms": 0.054992857142467856,
-          "average_per_query_ms": 0.10498636363562044,
+          "total_ms": 1.7437999995308928,
+          "average_per_request_ms": 0.041519047607878404,
+          "average_per_query_ms": 0.07926363634231332,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1739,9 +1741,9 @@
               "billed_output_tokens": 525
             },
             "latency": {
-              "total_ms": 1.7397000000300977,
-              "average_per_request_ms": 0.08284285714429036,
-              "average_per_query_ms": 0.0790772727286408,
+              "total_ms": 1.2813999996978964,
+              "average_per_request_ms": 0.06101904760466174,
+              "average_per_query_ms": 0.058245454531722564,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1765,9 +1767,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 0.5699999999535521,
-              "average_per_request_ms": 0.02714285714064534,
-              "average_per_query_ms": 0.02590909090697964,
+              "total_ms": 0.4623999998329964,
+              "average_per_request_ms": 0.022019047611095067,
+              "average_per_query_ms": 0.021018181810590744,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1794,9 +1796,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 3.199700000067196,
-          "average_per_request_ms": 0.05160806451721284,
-          "average_per_query_ms": 0.07272045454698173,
+          "total_ms": 2.1766000022580556,
+          "average_per_request_ms": 0.03510645164932348,
+          "average_per_query_ms": 0.04946818186950126,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1820,9 +1822,9 @@
               "billed_output_tokens": 500
             },
             "latency": {
-              "total_ms": 1.7416999999966265,
-              "average_per_request_ms": 0.08708499999983133,
-              "average_per_query_ms": 0.03958409090901424,
+              "total_ms": 1.1356000004525413,
+              "average_per_request_ms": 0.056780000022627064,
+              "average_per_query_ms": 0.02580909091937594,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1846,9 +1848,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.4580000000705695,
-              "average_per_request_ms": 0.034714285715965944,
-              "average_per_query_ms": 0.033136363637967486,
+              "total_ms": 1.0410000018055143,
+              "average_per_request_ms": 0.02478571432870272,
+              "average_per_query_ms": 0.023659090950125326,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1874,9 +1876,9 @@
           "billed_output_tokens": 500
         },
         "latency": {
-          "total_ms": 1.7416999999966265,
-          "average_per_request_ms": 0.08708499999983133,
-          "average_per_query_ms": 0.03958409090901424,
+          "total_ms": 1.1356000004525413,
+          "average_per_request_ms": 0.056780000022627064,
+          "average_per_query_ms": 0.02580909091937594,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1900,9 +1902,9 @@
               "billed_output_tokens": 500
             },
             "latency": {
-              "total_ms": 1.7416999999966265,
-              "average_per_request_ms": 0.08708499999983133,
-              "average_per_query_ms": 0.03958409090901424,
+              "total_ms": 1.1356000004525413,
+              "average_per_request_ms": 0.056780000022627064,
+              "average_per_query_ms": 0.02580909091937594,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1928,9 +1930,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 1.4580000000705695,
-          "average_per_request_ms": 0.034714285715965944,
-          "average_per_query_ms": 0.033136363637967486,
+          "total_ms": 1.0410000018055143,
+          "average_per_request_ms": 0.02478571432870272,
+          "average_per_query_ms": 0.023659090950125326,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1954,9 +1956,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.4580000000705695,
-              "average_per_request_ms": 0.034714285715965944,
-              "average_per_query_ms": 0.033136363637967486,
+              "total_ms": 1.0410000018055143,
+              "average_per_request_ms": 0.02478571432870272,
+              "average_per_query_ms": 0.023659090950125326,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2208,8 +2210,8 @@
         "repeat_hits_after_first_lookup": 7
       },
       "latency": {
-        "total_lookup_ms": 27.93339999982436,
-        "average_lookup_ms": 0.6348499999960082,
+        "total_lookup_ms": 18.503500001315842,
+        "average_lookup_ms": 0.4205340909389964,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -2233,9 +2235,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 2.3099999998805743,
-          "average_per_request_ms": 0.05499999999715653,
-          "average_per_query_ms": 0.10499999999457156,
+          "total_ms": 1.705600000150298,
+          "average_per_request_ms": 0.04060952381310233,
+          "average_per_query_ms": 0.07752727273410445,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2259,9 +2261,9 @@
               "billed_output_tokens": 525
             },
             "latency": {
-              "total_ms": 1.6736999999409363,
-              "average_per_request_ms": 0.07969999999718744,
-              "average_per_query_ms": 0.07607727272458802,
+              "total_ms": 1.2451000002329238,
+              "average_per_request_ms": 0.0592904762015678,
+              "average_per_query_ms": 0.05659545455604199,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2285,9 +2287,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 0.6362999999396379,
-              "average_per_request_ms": 0.030299999997125616,
-              "average_per_query_ms": 0.02892272726998354,
+              "total_ms": 0.4604999999173742,
+              "average_per_request_ms": 0.021928571424636868,
+              "average_per_query_ms": 0.020931818178062465,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2314,9 +2316,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 4.0158999998425315,
-          "average_per_request_ms": 0.055776388886701826,
-          "average_per_query_ms": 0.09127045454187571,
+          "total_ms": 2.7144000000589585,
+          "average_per_request_ms": 0.03770000000081887,
+          "average_per_query_ms": 0.06169090909224906,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2340,9 +2342,9 @@
               "billed_output_tokens": 750
             },
             "latency": {
-              "total_ms": 2.426499999984344,
-              "average_per_request_ms": 0.08088333333281146,
-              "average_per_query_ms": 0.05514772727237145,
+              "total_ms": 1.6945000011219236,
+              "average_per_request_ms": 0.05648333337073078,
+              "average_per_query_ms": 0.0385113636618619,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2366,9 +2368,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.5893999998581876,
-              "average_per_request_ms": 0.03784285713948066,
-              "average_per_query_ms": 0.036122727269504266,
+              "total_ms": 1.019899998937035,
+              "average_per_request_ms": 0.02428333330802464,
+              "average_per_query_ms": 0.02317954543038716,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2394,9 +2396,9 @@
           "billed_output_tokens": 750
         },
         "latency": {
-          "total_ms": 2.426499999984344,
-          "average_per_request_ms": 0.08088333333281146,
-          "average_per_query_ms": 0.05514772727237145,
+          "total_ms": 1.6945000011219236,
+          "average_per_request_ms": 0.05648333337073078,
+          "average_per_query_ms": 0.0385113636618619,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2420,9 +2422,9 @@
               "billed_output_tokens": 750
             },
             "latency": {
-              "total_ms": 2.426499999984344,
-              "average_per_request_ms": 0.08088333333281146,
-              "average_per_query_ms": 0.05514772727237145,
+              "total_ms": 1.6945000011219236,
+              "average_per_request_ms": 0.05648333337073078,
+              "average_per_query_ms": 0.0385113636618619,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2448,9 +2450,9 @@
           "billed_output_tokens": null
         },
         "latency": {
-          "total_ms": 1.5893999998581876,
-          "average_per_request_ms": 0.03784285713948066,
-          "average_per_query_ms": 0.036122727269504266,
+          "total_ms": 1.019899998937035,
+          "average_per_request_ms": 0.02428333330802464,
+          "average_per_query_ms": 0.02317954543038716,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2474,9 +2476,9 @@
               "billed_output_tokens": null
             },
             "latency": {
-              "total_ms": 1.5893999998581876,
-              "average_per_request_ms": 0.03784285713948066,
-              "average_per_query_ms": 0.036122727269504266,
+              "total_ms": 1.019899998937035,
+              "average_per_request_ms": 0.02428333330802464,
+              "average_per_query_ms": 0.02317954543038716,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2975,9 +2977,9 @@
         "billed_output_tokens": null
       },
       "latency": {
-        "total_ms": 0.40799999999308056,
-        "average_per_request_ms": 0.03399999999942338,
-        "average_per_query_ms": 0.05099999999913507,
+        "total_ms": 0.4378999997243227,
+        "average_per_request_ms": 0.036491666643693556,
+        "average_per_query_ms": 0.05473749996554034,
         "source": "measured local mock SDK call overhead; not provider latency"
       },
       "by_model": {
@@ -3002,9 +3004,9 @@
             "billed_output_tokens": null
           },
           "latency": {
-            "total_ms": 0.21769999997900413,
-            "average_per_request_ms": 0.03628333332983402,
-            "average_per_query_ms": 0.027212499997375517,
+            "total_ms": 0.2374999999119609,
+            "average_per_request_ms": 0.03958333331866015,
+            "average_per_query_ms": 0.029687499988995114,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         },
@@ -3028,14 +3030,859 @@
             "billed_output_tokens": 150
           },
           "latency": {
-            "total_ms": 0.19030000001407643,
-            "average_per_request_ms": 0.03171666666901274,
-            "average_per_query_ms": 0.023787500001759554,
+            "total_ms": 0.20039999981236178,
+            "average_per_request_ms": 0.033399999968726966,
+            "average_per_query_ms": 0.025049999976545223,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         }
       }
     }
+  },
+  "cost_comparison": {
+    "schema_version": 1,
+    "methodology": "paired-routing-fixtures-v1",
+    "threshold": 0.9,
+    "models": {
+      "small": "gemini-3.1-flash-lite",
+      "large": "gemini-3.8-flash",
+      "embedding": "gemini-embedding-001"
+    },
+    "queries": [
+      {
+        "id": "0:simple_pass",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "0:escalation_pass",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "escalation"
+          },
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "0:both_fail_second_better",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "escalation"
+          }
+        ]
+      },
+      {
+        "id": "0:both_fail_tie",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "escalation"
+          }
+        ]
+      },
+      {
+        "id": "0:both_fail_initial_better",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "0:complex_pass",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "0:complex_fail",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "initial"
+          }
+        ]
+      },
+      {
+        "id": "0:missing_usage",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "thinking_tokens": null,
+            "billed_output_tokens": null,
+            "total_tokens": null,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "1:simple_pass",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "1:escalation_pass",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "1:both_fail_second_better",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "escalation"
+          }
+        ]
+      },
+      {
+        "id": "1:both_fail_tie",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.1-flash-lite",
+            "request_kind": "small_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": "0.0000625",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "initial"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "escalation"
+          }
+        ]
+      },
+      {
+        "id": "1:both_fail_initial_better",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "1:complex_pass",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      },
+      {
+        "id": "1:complex_fail",
+        "cache_outcome": "miss",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          },
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "initial"
+          }
+        ]
+      },
+      {
+        "id": "1:missing_usage",
+        "cache_outcome": "safe_hit",
+        "baseline": [
+          {
+            "model": "gemini-3.8-flash",
+            "request_kind": "large_model",
+            "status": "success",
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "thinking_tokens": 5,
+            "billed_output_tokens": 25,
+            "total_tokens": 125,
+            "cached_input_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "pricing_unavailable",
+            "pricing_version": null,
+            "phase": "baseline"
+          }
+        ],
+        "optimized": [
+          {
+            "model": "gemini-embedding-001",
+            "request_kind": "embedding",
+            "status": "success",
+            "input_tokens": null,
+            "output_tokens": null,
+            "estimated_cost_usd": null,
+            "cost_status": "usage_unavailable",
+            "usage_source": null,
+            "pricing_version": "standard-text-2026-11-03",
+            "phase": "embedding"
+          }
+        ]
+      }
+    ]
   },
   "measurement_notes": [
     "Offline synthetic vectors and mock SDK text/token fixtures; no actual API spend or real Gemini quality measured.",
@@ -3045,7 +3892,7 @@
     "All cache reviews are explicit and bound to exact fixture texts. Ineligible cases remain in overall cache counts.",
     "Warm seed generation/storage metrics are separate from repeated lookup/fallback workload metrics.",
     "Misses generate but are not saved, preserving the same candidate set across threshold comparisons.",
-    "Avoided generation includes unsafe false hits; safe reuse is reported separately. No monetary savings baseline is claimed.",
+    "Avoided generation includes unsafe false hits; safe reuse is reported separately. These component results are separate from the paired cost comparison.",
     "Cost is estimated from the unchanged pricing file and synthetic usage; missing usage or prices make totals incomplete.",
     "Average cost per query divides by all scenario queries, including cache hits. By-model averages use the same denominator.",
     "Threshold experiments and the routing experiment are separate workloads and must not be added as one production total.",

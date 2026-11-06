@@ -4,7 +4,7 @@ A Python project exploring how to reduce LLM API costs through measured requests
 
 ## Why this project?
 
-Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. The read-only dashboard displays offline cache and routing results alongside available historical request records.
+Repeated questions can incur repeated generation costs, while different questions may need different models. LLM Cost Router aims to measure request cost and latency, reuse suitable answers through semantic caching, route requests by cost, and escalate when answer quality is insufficient. Today, measurement, cache building blocks, complexity-first model routing, and standalone quality-based escalation are implemented. The read-only dashboard displays offline cache, routing and paired cost results alongside available historical request records.
 
 ## Implemented features
 
@@ -896,6 +896,61 @@ cost reduction is claimed. CLI and cache/routing application integration remain
 separate from this benchmark-only orchestration.
 
 
+## Paired baseline and optimized cost comparison
+
+Cost Analysis in both dashboards reads the optional `cost_comparison` ledger
+from the saved benchmark report. The default comparison repeats the eight routing
+queries twice, in the same order for both scenarios, using the existing
+`--lookup-repeats` setting. Its cache starts empty and uses threshold 0.9.
+
+- **Baseline** runs one large-role generation per query using that query's existing
+  large-role response and token fixture. These are explicit synthetic assumptions.
+- **Optimized** invokes the existing semantic cache first, then `EscalationPipeline`
+  on misses. Lookup and storage embeddings, initial generations, and escalation
+  attempts all enter the ledger through existing instrumentation.
+- The explicit `comparison_cache_reviews` fixtures bind query eligibility,
+  reviewed responses, equivalence groups, and synthetic unit vectors to the exact
+  routing queries. The existing quality evaluator must also pass before storage.
+- Safe cache hits count avoided initial generation calls. False and unreviewed hits
+  withhold savings across the comparison. Misses incur the actual recorded attempts.
+  Additional escalation calls can offset avoided calls.
+- `benchmark_accounting.py` contains the existing shared Decimal aggregation.
+  `cost_comparison.py` validates paired observations, computes per-query amounts,
+  savings and percentages, and supplies both dashboards. Monetary JSON fields are
+  decimal strings. Chart coordinates use floating-point display values.
+- Unknown rates or usage preserve known subtotals and withhold totals and savings.
+  Zero-query totals are zero, per-query costs are unavailable, and a zero baseline
+  has an undefined savings percentage. Negative savings remain negative.
+
+The supplied pricing file lacks `gemini-3.8-flash` rates. Embedding usage and one
+small-role usage fixture are also missing. The default paired run records 16 baseline
+generations, 15 optimized generations, 6 safe hits, and 5 escalations. Its known
+optimized subtotal is $0.000375. Total cost and monetary savings are unavailable.
+
+Generate a fresh reproducible report with the existing CLI. Choose a new output
+path because the command protects existing files.
+
+```powershell
+.\.venv\Scripts\python.exe -B benchmarks.py --output benchmark_report_task3.json
+.\.venv\Scripts\python.exe -B -m pytest tests -q
+cd frontend
+npm run build
+npm run preview -- --host 127.0.0.1
+```
+
+The dashboard reads `benchmark_report.json`. Review the generated report before
+placing it at that path. Older reports remain usable and show a missing-comparison
+message. Malformed comparison ledgers leave the other dashboard metrics available.
+Historical requests never enter the paired benchmark calculation. Their date/model
+filters and currency selection apply to historical expenditure. Benchmark amounts
+use USD. Live measurements require a connected request source.
+
+This experiment measures fixture accounting. Synthetic vectors, scripted response
+quality, and fixed usage assumptions do not establish production savings. Cache
+correctness uses explicit fixture reviews, and the answer evaluator remains heuristic.
+A complete cost chart appears when both scenario totals are available. The generation
+call chart remains available with incomplete prices.
+
 ## Local Streamlit dashboard
 
 Start from the repository root so Streamlit picks up the local theme and server
@@ -982,6 +1037,6 @@ internal test event loop. Browser verification covers desktop and phone layouts.
 
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional cost and performance analytics, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional performance analytics, PostgreSQL, and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.

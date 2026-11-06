@@ -167,3 +167,22 @@ def test_analytics_threshold_selection_and_separate_historical_panel(app, tmp_pa
     assert not app.exception
     for role in ("Small", "Large"):
         assert f'<h3>{role} model</h3><div class="lcr-value lcr-ready">0</div>' in html(app)
+
+def test_cost_comparison_navigation_and_missing_large_model_price(app, tmp_path):
+    from benchmarks import run_benchmarks
+    report = run_benchmarks()
+    (tmp_path / "benchmark_report.json").write_text(json.dumps(report), encoding="utf-8")
+    for section in ui.SECTIONS:
+        app.radio[0].set_value(section).run()
+        assert not app.exception
+    app.radio[0].set_value("Cost Analysis").run()
+    assert not app.exception
+    output = html(app)
+    assert "Baseline cost" in output and "Optimized known subtotal" in output
+    assert "Unavailable" in output and "0.00037500" in output
+    assert any("Pricing unavailable for gemini-3.8-flash" in item.value for item in app.info)
+    assert len(app.table) == 1
+    report.pop("cost_comparison")
+    (tmp_path / "benchmark_report.json").write_text(json.dumps(report), encoding="utf-8")
+    app.button[0].click().run()
+    assert not app.exception and any("no paired cost workload" in item.value for item in app.info)

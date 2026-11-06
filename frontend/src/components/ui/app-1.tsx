@@ -1,12 +1,13 @@
 import {useState,useSyncExternalStore,type ReactNode} from "react";
 import {Search,SlidersHorizontal,ArrowUpRight,Sparkles,DatabaseZap,Activity,Database,RefreshCw,Route,Wallet,Settings,LayoutDashboard} from "lucide-react";
-import {AreaChart,Area,LineChart,Line,CartesianGrid,XAxis,YAxis,Tooltip,ResponsiveContainer} from "recharts";
+import {BarChart,Bar,AreaChart,Area,LineChart,Line,CartesianGrid,XAxis,YAxis,Tooltip,ResponsiveContainer} from "recharts";
 import {useWorkspace,type RequestRow} from "@/lib/workspace";
 import {Button} from "./button";
 const pages=["Overview","Cache Analytics","Model Routing","Cost Analysis","Performance","System Information"];
 const icons=[LayoutDashboard,Database,Route,Wallet,Activity,Settings];
 const day=(d:Date)=>d.toISOString().slice(0,10);
 const percent=(fraction:number|null|undefined)=>fraction==null?null:(100*fraction).toFixed(1)+"%";
+const usd=(value:string|null|undefined)=>value==null?null:new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:8}).format(Number(value));
 const ratio=(n:number|null|undefined,d:number|null|undefined)=>n!=null&&d? (100*n/d).toFixed(1)+"%":null;
 const sum=(v:(number|null)[])=>v.length&&v.every((x):x is number=>x!=null)?v.reduce((a,b)=>a+b,0):null;
 const avg=(v:number[])=>v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
@@ -49,6 +50,7 @@ export default function App1(){
  const today=day(new Date()),start=range==="Custom"?from:day(new Date(Date.now()-86400000*(range==="Today"?0:range==="7 days"?6:29))),end=range==="Custom"?to:today;
  const invalid=!start||!end||start>end,rows=(data?.history??[]).filter(r=>!invalid&&r.time.slice(0,10)>=start&&r.time.slice(0,10)<=end&&(model==="All models"||r.model===model)).sort((a,b)=>b.time.localeCompare(a.time));
  const b=data?.bench,c=b?.cache.find(x=>x.t===(threshold??data?.threshold))??b?.cache[0],n=data?.history&&!invalid?rows.length:null;
+ const comparison=b?.comparison.status==="ready"?b.comparison:null;
  const factor=currency==="USD"?1:Number(rate), money=(v:number|null)=>v==null||!Number.isFinite(factor)||factor<=0?null:new Intl.NumberFormat("en",{style:"currency",currency,maximumFractionDigits:6}).format(v*factor);
  const total=sum(rows.map(r=>r.cost)),lat=rows.flatMap(r=>r.ms==null?[]:[r.ms]).sort((a,b)=>a-b),pct=(p:number)=>lat.length?lat[Math.ceil(lat.length*p)-1]:null;
  const models=[...new Set([data?.small,data?.large,...(data?.history??[]).map(r=>r.model)].filter((x):x is string=>!!x))];
@@ -163,7 +165,85 @@ export default function App1(){
  </div>
  <p className="context">Historical counts include successful and failed role-tagged calls. The request log omits classifications, linked attempts, evaluation outcomes and final selections.</p>
  </>}
- {page===3&&<><div className="tiles">{tile("Total estimated expenditure",money(total),"Historical estimate")}{tile("Cost per request",money(total!=null&&rows.length?total/rows.length:null),"Historical estimate")}{unavailable("Input token cost")}{unavailable("Output token cost")}</div><h2 className="metric-group">Cost comparison</h2><div className="tiles">{unavailable("Baseline cost")}{unavailable("Optimized scenario cost")}{unavailable("Estimated savings")}{unavailable("Savings percentage")}</div><div className="panels">{chart(true)}<Panel title="Cost by model" note={"Historical estimates · "+currency}>{models.filter(m=>model==="All models"||model===m).map(m=><p className="line" key={m}>{m}<b>{money(sum(rows.filter(r=>r.model===m).map(r=>r.cost)))??"Unavailable"}</b></p>)}</Panel></div></>}
+ {page===3&&<>
+ <p className="context">Synthetic benchmark estimates · USD · {comparison?.query_count ?? "Unavailable"} paired queries · cold cache start</p>
+ <div className="tiles">
+   {bench("Baseline cost",usd(comparison?.baseline.estimated_cost_usd))}
+   {bench("Optimized cost",usd(comparison?.optimized.estimated_cost_usd))}
+   {bench("Estimated savings",usd(comparison?.savings_usd))}
+   {bench("Savings percentage",comparison?.savings_percentage==null?null:Number(comparison.savings_percentage).toFixed(2)+"%")}
+ </div>
+ <div className="tiles">
+   {bench("Baseline cost per query",usd(comparison?.baseline.average_cost_per_query_usd))}
+   {bench("Optimized cost per query",usd(comparison?.optimized.average_cost_per_query_usd))}
+ </div>
+ {(b?.comparison.issues ?? ["The paired benchmark report is unavailable."]).map(issue=><p className="empty" key={issue}>{issue}</p>)}
+ {comparison&&<>
+ <div className="panels">
+   <Panel title="Scenario comparison" note="Synthetic benchmark · generation calls, including escalations">
+     <ResponsiveContainer width="100%" height={210}>
+       <BarChart accessibilityLayer data={[{scenario:"Baseline",calls:comparison.baseline.generation_calls},{scenario:"Optimized",calls:comparison.optimized.generation_calls}]} margin={{top:12,right:16,left:0,bottom:8}}>
+         <CartesianGrid vertical={false} stroke="#dce5df" strokeDasharray="3 4"/>
+         <XAxis dataKey="scenario" tick={chartTick} axisLine={false} tickLine={false}/>
+         <YAxis allowDecimals={false} tick={chartTick} axisLine={false} tickLine={false} width={36}/>
+         <Tooltip contentStyle={tooltipStyle}/>
+         <Bar name="Generation calls" dataKey="calls" fill="#215740" radius={[5,5,0,0]} isAnimationActive={!reducedMotion} animationDuration={220}/>
+       </BarChart>
+     </ResponsiveContainer>
+   </Panel>
+   <Panel title="Estimated scenario cost" note="Synthetic benchmark · complete totals in USD">
+     {comparison.baseline.complete&&comparison.optimized.complete?<ResponsiveContainer width="100%" height={210}>
+       <BarChart accessibilityLayer data={[{scenario:"Baseline",cost:Number(comparison.baseline.estimated_cost_usd)},{scenario:"Optimized",cost:Number(comparison.optimized.estimated_cost_usd)}]} margin={{top:12,right:16,left:0,bottom:8}}>
+         <CartesianGrid vertical={false} stroke="#dce5df" strokeDasharray="3 4"/>
+         <XAxis dataKey="scenario" tick={chartTick} axisLine={false} tickLine={false}/>
+         <YAxis tick={chartTick} axisLine={false} tickLine={false} width={70}/>
+         <Tooltip contentStyle={tooltipStyle} formatter={value=>usd(String(value))}/>
+         <Bar name="Estimated USD" dataKey="cost" fill="#90ac42" radius={[5,5,0,0]} isAnimationActive={!reducedMotion} animationDuration={220}/>
+       </BarChart>
+     </ResponsiveContainer>:<p className="empty">The cost chart requires complete estimates for both scenarios. Known subtotals appear below.</p>}
+   </Panel>
+ </div>
+ <div className="tiles">
+   {bench("Baseline generation calls",comparison.baseline.generation_calls)}
+   {bench("Optimized generation calls",comparison.optimized.generation_calls)}
+   {bench("Safe generation calls avoided",comparison.safe_calls_avoided)}
+   {bench("Unsafe cache hits",comparison.cache_outcomes.false_hit)}
+ </div>
+ <div className="tiles">
+   {bench("Baseline known subtotal",usd(comparison.baseline.known_cost_subtotal_usd))}
+   {bench("Optimized known subtotal",usd(comparison.optimized.known_cost_subtotal_usd))}
+   {bench("Escalation expenditure",usd(comparison.escalation.estimated_cost_usd))}
+   {bench("Embedding expenditure",usd(comparison.embedding.estimated_cost_usd))}
+ </div>
+ <p className="context">Unpriced requests · baseline {comparison.baseline.unknown_cost_requests}, optimized {comparison.optimized.unknown_cost_requests}.
+   {" "}Escalation known subtotal {usd(comparison.escalation.known_cost_subtotal_usd)}.
+   {" "}Embedding known subtotal {usd(comparison.embedding.known_cost_subtotal_usd)} includes lookup and storage.</p>
+ <div className="panels">
+   {comparison.by_model.map(row=><Panel key={row.model} title={row.model} note="Synthetic benchmark · model costs in USD">
+     {[["Baseline",row.baseline],["Optimized",row.optimized]].map(([name,metrics])=>{
+       const metric=metrics as typeof row.baseline;
+       return <div key={String(name)}>
+         <p className="line"><span>{String(name)}</span><strong>{usd(metric.estimated_cost_usd)??"Unavailable"}</strong></p>
+         <p className="context">Known subtotal {usd(metric.known_cost_subtotal_usd)} · {metric.unknown_cost_requests} of {metric.requests} requests unpriced</p>
+       </div>;
+     })}
+   </Panel>)}
+ </div>
+ <details className="panel"><summary>Comparison methodology</summary>
+   <p className="context">Both scenarios process the same ordered routing fixtures. The baseline calls the large role once per query.
+     Each role uses its own synthetic response and token-usage fixture, including thinking tokens.
+     The optimized run uses the existing cache, router, evaluator and escalation pipeline at threshold {comparison.threshold}.
+     Query and response eligibility are explicitly reviewed.</p>
+   <p className="context">Amounts use the saved benchmark pricing and recorded attempts. Embedding costs include lookup and storage.
+     Missing prices or usage withhold totals. False or unreviewed cache hits withhold savings.
+     Synthetic vectors and responses cannot establish production quality or savings.</p>
+ </details>
+ </>}
+ <h2 className="metric-group">Historical expenditure</h2>
+ <div className="tiles">{tile("Total estimated expenditure",money(total),"Historical estimate")}{tile("Cost per request",money(total!=null&&rows.length?total/rows.length:null),"Historical estimate")}{unavailable("Input token cost")}{unavailable("Output token cost")}</div>
+ <div className="panels">{chart(true)}<Panel title="Historical cost by model" note={"Historical estimates · "+currency}>{models.filter(m=>model==="All models"||model===m).map(m=><p className="line" key={m}>{m}<b>{money(sum(rows.filter(r=>r.model===m).map(r=>r.cost)))??"Unavailable"}</b></p>)}</Panel></div>
+ <p className="context">Historical savings are unavailable because request logs lack paired baseline usage and linked cache outcomes. Live measurements require a connected request source. Benchmark values use USD.</p>
+ </>}
  {page===4&&<><h2 className="metric-group">Request latency</h2><div className="tiles">{tile("Average latency",ms(avg(lat)))}{[50,95,99].map(p=>tile("P"+p+" latency",ms(pct(p/100))))}</div><h2 className="metric-group">Processing time</h2><div className="tiles">{bench("Cache lookup latency",ms(c?.lookup))}{["Embedding","Generation"].map((k)=>tile(k+" latency",ms(avg(rows.filter(r=>(r.kind==="embedding")===(k==="Embedding")&&r.ms!=null).map(r=>r.ms!)))))}{unavailable("Escalation overhead")}</div><h2 className="metric-group">Usage and quality</h2><div className="tiles">{tile("Input tokens",sum(rows.map(r=>r.input)))}{tile("Output tokens",sum(rows.map(r=>r.output)))}{bench("Final answer-quality pass rate",ratio(b?.passed,b?.queries))}</div></>}
  {page===5&&<div className="tiles system-list">{tile("Small Gemini model",data?.small,"Configured")}{tile("Large Gemini model",data?.large,"Configured")}{tile("Cache schema",data?.schema,"Configuration")}{tile("Application cache version",data?.version,"Configuration")}{tile("Similarity threshold",data?.threshold,"Default")}{tile("Evaluation threshold",data?.evaluation,"Default")}{tile("Database status","Not probed","Local")}{tile("API connectivity","Not probed","Live")}{unavailable("Application version")}{tile("Last successful request",rows.find(r=>r.status==="success")?.time)}</div>}
  </div>

@@ -7,7 +7,20 @@ type Cache = {
   falseHits: Count; falseMisses: Count; falseHitRate: Count; falseMissRate: Count;
   seeded: Count; lookups: Count; avoided: Count; lookup: Count;
 };
+type CostSummary = {
+  estimated_cost_usd: string | null; known_cost_subtotal_usd: string;
+  average_cost_per_query_usd: string | null; unknown_cost_requests: number;
+  complete: boolean; requests: number; generation_calls: number;
+};
+type CostComparison = {status: "missing" | "invalid"; issues: string[]} | {
+  status: "ready"; issues: string[]; query_count: number; threshold: number;
+  baseline: CostSummary; optimized: CostSummary; escalation: CostSummary; embedding: CostSummary;
+  savings_usd: string | null; savings_percentage: string | null; safe_calls_avoided: number;
+  cache_outcomes: {safe_hit: number; false_hit: number; unreviewed_hit: number; miss: number};
+  by_model: {model: string; baseline: CostSummary; optimized: CostSummary}[];
+};
 type Benchmark = {
+  comparison: CostComparison;
   cache: Cache[]; queries: number; small: Count; large: Count; simple: Count; complex: Count;
   attempts: Roles; final: Roles; escalations: Count; successes: Count; accepted: Count; passed: Count;
   escalationRate: Count; successRate: Count; acceptanceRate: Count;

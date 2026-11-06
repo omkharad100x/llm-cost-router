@@ -1,9 +1,7 @@
 """Offline component benchmarks. No real SDK client or environment loading."""
 
 import argparse
-from collections import Counter
 from dataclasses import asdict, dataclass
-from decimal import Decimal
 import hashlib
 import json
 import math
@@ -18,8 +16,10 @@ from types import SimpleNamespace
 
 from google.genai import types
 
+from benchmark_accounting import summarize_requests
 from cache_config import DEFAULT_CONFIG, validate_threshold
 from cache_schema import SCHEMA_VERSION
+from cost_comparison import comparison_metrics
 from embeddings import DIMENSIONS, MODEL, EmbeddingGenerator
 from escalation import EscalationPipeline
 from evaluate_similarity import (
@@ -86,72 +86,6 @@ def cache_metrics(rows):
     }
 
 
-def _request_totals(records, query_count):
-    def total(field):
-        values = [record.get(field) for record in records]
-        return sum(values) if all(value is not None for value in values) else None
-
-    known_costs = [Decimal(record["estimated_cost_usd"]) for record in records
-                   if record.get("estimated_cost_usd") is not None]
-    unknown = len(records) - len(known_costs)
-    subtotal = sum(known_costs, Decimal(0))
-    total_cost = None if unknown else subtotal
-    statuses = Counter(record.get("cost_status", "metrics_unavailable") for record in records)
-    status = "estimated" if records else "no_requests"
-    if unknown:
-        status = ("pricing_unavailable" if any(
-            name in statuses for name in ("pricing_unavailable", "cached_pricing_unavailable")
-        ) else "incomplete")
-    latency = total("latency_ms")
-    return {
-        "requests": len(records),
-        "cost": {
-            "estimated_cost_usd": str(total_cost) if total_cost is not None else None,
-            "average_cost_per_query_usd": str(total_cost / query_count)
-            if total_cost is not None and query_count else None,
-            "known_cost_subtotal_usd": str(subtotal), "unknown_cost_requests": unknown,
-            "complete": unknown == 0, "status": status, "attempt_statuses": dict(sorted(statuses.items())),
-        },
-        "usage": {field: total(field) for field in
-                  ("input_tokens", "output_tokens", "thinking_tokens", "billed_output_tokens")},
-        "latency": {
-            "total_ms": latency,
-            "average_per_request_ms": ratio(latency, len(records)) if latency is not None else None,
-            "average_per_query_ms": ratio(latency, query_count) if latency is not None else None,
-            "source": "measured local mock SDK call overhead; not provider latency",
-        },
-    }
-
-
-def summarize_requests(records, *, query_count):
-    """Aggregate instrumentation records without inventing tokens or repricing."""
-    if type(query_count) is not int or query_count < 0:
-        raise ValueError("query_count must be a nonnegative integer.")
-    for record in records:
-        if not isinstance(record, dict) or not isinstance(record.get("model"), str):
-            raise ValueError("Expected instrumentation records with model names.")
-        for field in ("input_tokens", "output_tokens", "thinking_tokens", "billed_output_tokens"):
-            value = record.get(field)
-            if value is not None and (type(value) is not int or value < 0):
-                raise ValueError("Token metrics must be nonnegative integers or None.")
-        value = record.get("latency_ms")
-        if value is not None and (type(value) not in (int, float) or not math.isfinite(value) or value < 0):
-            raise ValueError("Latency must be finite and nonnegative or None.")
-        value = record.get("estimated_cost_usd")
-        if value is not None:
-            try:
-                amount = Decimal(value)
-                if not amount.is_finite() or amount < 0:
-                    raise ValueError
-            except (ValueError, TypeError, ArithmeticError):
-                raise ValueError("Cost must be a finite nonnegative decimal or None.") from None
-    return {
-        **_request_totals(records, query_count),
-        "by_model": {model: _request_totals([r for r in records if r["model"] == model], query_count)
-                     for model in sorted({record["model"] for record in records})},
-    }
-
-
 def _text(value):
     return isinstance(value, str) and bool(value.strip())
 
@@ -211,6 +145,35 @@ def load_fixtures(path, pairs):
             ):
                 raise ValueError("Invalid model response fixture.")
             _usage(reply["usage"])
+    reviews = data.get("comparison_cache_reviews")
+    if reviews is not None:
+        if not isinstance(reviews, dict):
+            raise ValueError("Invalid comparison cache reviews.")
+        queries = [case["query"] for case in data["routing_cases"]]
+        if len(queries) != len(set(queries)):
+            raise ValueError("Comparison queries must have unique response fixtures.")
+        for case in data["routing_cases"]:
+            review = reviews.get(case["id"])
+            if not isinstance(review, dict) or review.get("query") != case["query"]:
+                raise ValueError("Comparison review must match its routing query.")
+            flags = review.get("query_flags")
+            if not isinstance(flags, dict) or set(flags) != QUERY_FLAGS or any(type(v) is not bool for v in flags.values()):
+                raise ValueError("Explicit comparison eligibility flags are required.")
+            if not _text(review.get("equivalence_group")) or not _text(review.get("reason")):
+                raise ValueError("A comparison review needs an equivalence group and reason.")
+            vector = review.get("embedding")
+            if (not isinstance(vector, list) or not 1 <= len(vector) <= DIMENSIONS
+                    or any(type(v) not in (int, float) or not math.isfinite(v) for v in vector)
+                    or not math.isclose(sum(v*v for v in vector), 1.0, abs_tol=1e-6)):
+                raise ValueError("Comparison vectors must be normalized synthetic embeddings.")
+            responses = review.get("response_reviews")
+            if not isinstance(responses, list):
+                raise ValueError("Explicit response reviews are required.")
+            for response in responses:
+                if (not isinstance(response, dict) or set(response) != RESPONSE_FLAGS | {"response"}
+                        or not _text(response["response"])
+                        or any(type(response[k]) is not bool for k in RESPONSE_FLAGS)):
+                    raise ValueError("Invalid comparison response review.")
     return data
 
 
@@ -409,6 +372,72 @@ def benchmark_routing(fixtures, pricing, config):
     }
 
 
+def benchmark_cost_comparison(fixtures, pricing, config):
+    """Pair baseline and cached routing calls on one cold-start synthetic workload."""
+    reviews = fixtures.get("comparison_cache_reviews")
+    if reviews is None:
+        return None  # Older fixtures have no reviewed cache/embedding assumptions.
+    cases = fixtures["routing_cases"]
+    replies = {(getattr(config.models, role + "_model"), case["query"]): reply
+               for case in cases for role, reply in case["responses"].items()}
+    vectors = {case["query"]: reviews[case["id"]]["embedding"] for case in cases}
+    groups = {case["query"]: reviews[case["id"]]["equivalence_group"] for case in cases}
+    records = []
+    adapter = _FixtureModels(replies, vectors, fixtures["embedding_token_count"])
+    models, embedder = _components(adapter, pricing, config, records)
+    pipeline = EscalationPipeline(ModelRouter(models, config=config.routing),
+                                  evaluation_config=config.evaluation)
+    observations = []
+
+    def captured(start, phase):
+        # Timings, wall-clock timestamps and arbitrary text never enter the cost ledger.
+        return [{**{k: v for k, v in record.items() if k not in ("timestamp_utc", "latency_ms")},
+                 "phase": phase} for record in records[start:]]
+
+    with TemporaryDirectory(prefix="llm-comparison-") as directory:
+        with SemanticCache(Path(directory) / "comparison.sqlite3", embedder,
+                           namespace="cost-comparison", clock=lambda: 1000.0) as cache:
+            for repeat in range(config.lookup_repeats):
+                for case in cases:
+                    query = case["query"]
+                    review = reviews[case["id"]]
+                    eligibility = QueryEligibility(query=query, **review["query_flags"])
+                    start = len(records)
+                    models.generate(query, role="large")
+                    baseline = captured(start, "baseline")
+                    start = len(records)
+                    lookup = cache.lookup(query, eligibility=eligibility)
+                    optimized = captured(start, "embedding")
+                    outcome = "miss"
+                    if lookup.hit:
+                        matched_group = groups.get(lookup.matched_query)
+                        outcome = ("unreviewed_hit" if matched_group is None else
+                                   "safe_hit" if matched_group == review["equivalence_group"] else "false_hit")
+                    else:
+                        start = len(records)
+                        result = pipeline.generate(query)
+                        generation = captured(start, "initial")
+                        if len(generation) != result.total_attempts:
+                            raise ValueError("Comparison instrumentation missed an attempt.")
+                        for attempt in generation[1:]:
+                            attempt["phase"] = "escalation"
+                        optimized.extend(generation)
+                        response = result.final_response
+                        approval = next((r for r in review["response_reviews"]
+                                         if r["response"] == response.text), None)
+                        if result.final_evaluation.decision == "pass" and approval is not None:
+                            start = len(records)
+                            cache.save(query, response.text, response.model, eligibility=eligibility,
+                                       response_eligibility=ResponseEligibility(**approval))
+                            optimized.extend(captured(start, "embedding"))
+                    observations.append(dict(id=f"{repeat}:{case['id']}", cache_outcome=outcome,
+                                             baseline=baseline, optimized=optimized))
+    return dict(schema_version=1, methodology="paired-routing-fixtures-v1",
+                threshold=DEFAULT_CONFIG.similarity_threshold,
+                models=dict(small=config.models.small_model, large=config.models.large_model, embedding=MODEL),
+                queries=observations)
+
+
 def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
                    embeddings=DEFAULT_EMBEDDINGS, fixtures=DEFAULT_FIXTURES, pricing=DEFAULT_PRICING):
     if not isinstance(config, BenchmarkConfig):
@@ -434,7 +463,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
         "implementation_sha256": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in (
-                "benchmarks.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
+                "benchmarks.py", "benchmark_accounting.py", "cost_comparison.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
                 "semantic_similarity.py", "embeddings.py", "evaluate_similarity.py",
                 "model_router.py", "gemini_models.py", "model_config.py", "instrumentation.py",
                 "query_complexity.py", "complexity_config.py", "answer_evaluator.py",
@@ -453,6 +482,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
         },
         "similarity_only": similarity,
         "cache_benchmarks": cache, "pipeline_benchmark": routing,
+        "cost_comparison": benchmark_cost_comparison(fixture_data, rates, config),
         "measurement_notes": [
             "Offline synthetic vectors and mock SDK text/token fixtures; no actual API spend or real Gemini quality measured.",
             "Generation timings measure instrumented mock SDK execution, not full routing/evaluation time or provider latency.",
@@ -461,7 +491,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
             "All cache reviews are explicit and bound to exact fixture texts. Ineligible cases remain in overall cache counts.",
             "Warm seed generation/storage metrics are separate from repeated lookup/fallback workload metrics.",
             "Misses generate but are not saved, preserving the same candidate set across threshold comparisons.",
-            "Avoided generation includes unsafe false hits; safe reuse is reported separately. No monetary savings baseline is claimed.",
+            "Avoided generation includes unsafe false hits; safe reuse is reported separately. These component results are separate from the paired cost comparison.",
             "Cost is estimated from the unchanged pricing file and synthetic usage; missing usage or prices make totals incomplete.",
             "Average cost per query divides by all scenario queries, including cache hits. By-model averages use the same denominator.",
             "Threshold experiments and the routing experiment are separate workloads and must not be added as one production total.",
@@ -489,6 +519,13 @@ def format_summary(report):
     lines.append("Pipeline cost: " + json.dumps(pipeline["request_metrics"]["cost"], sort_keys=True))
     lines.append("Pipeline usage: " + json.dumps(pipeline["request_metrics"]["usage"], sort_keys=True))
     lines.append("Pipeline latency: " + json.dumps(pipeline["request_metrics"]["latency"], sort_keys=True))
+    if report.get("cost_comparison") is not None:
+        comparison = comparison_metrics(report["cost_comparison"])
+        lines.append("Paired cost comparison: " + json.dumps({
+            "queries": comparison["query_count"], "baseline": comparison["baseline"],
+            "optimized": comparison["optimized"], "savings_usd": comparison["savings_usd"],
+            "issues": comparison["issues"],
+        }, sort_keys=True))
     return "\n".join(lines)
 
 

@@ -20,6 +20,8 @@ RATES = {
 
 
 def response(**usage):
+    usage.setdefault("cached_content_token_count", 0)
+    usage.setdefault("tool_use_prompt_token_count", 0)
     return types.GenerateContentResponse(
         usage_metadata=types.GenerateContentResponseUsageMetadata(**usage)
     )

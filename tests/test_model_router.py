@@ -34,6 +34,7 @@ def setup_router(*, pricing=None, config=RoutingConfig(), model_config=CONFIG):
             role="model", parts=[types.Part.from_text(text="Synthetic answer")],
         ))],
         usage_metadata=types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
             prompt_token_count=100, candidates_token_count=20,
             thoughts_token_count=5, total_token_count=125,
         ),
@@ -140,6 +141,7 @@ def test_configured_pricing_does_not_imply_known_cost_without_usage():
 def test_reported_zero_remains_zero():
     router, client, _ = setup_router()
     client.models.generate_content.return_value.usage_metadata = types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
         prompt_token_count=0, candidates_token_count=0, thoughts_token_count=0, total_token_count=0,
     )
     result = router.generate(SIMPLE)

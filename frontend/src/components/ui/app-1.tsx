@@ -7,7 +7,6 @@ const pages=["Overview","Cache Analytics","Model Routing","Cost Analysis","Perfo
 const icons=[LayoutDashboard,Database,Route,Wallet,Activity,Settings];
 const day=(d:Date)=>d.toISOString().slice(0,10);
 const percent=(fraction:number|null|undefined)=>fraction==null?null:(100*fraction).toFixed(1)+"%";
-const usd=(value:string|null|undefined)=>value==null?null:new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:8}).format(Number(value));
 const ratio=(n:number|null|undefined,d:number|null|undefined)=>n!=null&&d? (100*n/d).toFixed(1)+"%":null;
 const sum=(v:(number|null)[])=>v.length&&v.every((x):x is number=>x!=null)?v.reduce((a,b)=>a+b,0):null;
 const avg=(v:number[])=>v.length?v.reduce((a,b)=>a+b,0)/v.length:null;
@@ -46,21 +45,24 @@ function Split({labels, values, missing = "Report counts unavailable."}: {labels
 }
 export default function App1(){
  const reducedMotion = useSyncExternalStore(subscribeToMotion, () => motionPreference.matches);
- const {data,loading,error,refresh}=useWorkspace(); const [page,P]=useState(0),[range,R]=useState("7 days"),[model,M]=useState("All models"),[currency,C]=useState("USD"),[rate,F]=useState("1"),[from,A]=useState(day(new Date())),[to,Z]=useState(day(new Date())),[threshold,T]=useState<number|null>(null);
+ const [page,P]=useState(0),[range,R]=useState("7 days"),[model,M]=useState("All models"),[currency,C]=useState("USD"),[rate,F]=useState("1"),[from,A]=useState(day(new Date())),[to,Z]=useState(day(new Date())),[threshold,T]=useState<number|null>(null);
  const today=day(new Date()),start=range==="Custom"?from:day(new Date(Date.now()-86400000*(range==="Today"?0:range==="7 days"?6:29))),end=range==="Custom"?to:today;
+ const {data,loading,error,refresh}=useWorkspace({from:start,to:end,model,currency,rate:currency==="USD"?"1":rate});
+ const costs=loading?null:data?.costs;
  const invalid=!start||!end||start>end,rows=(data?.history??[]).filter(r=>!invalid&&r.time.slice(0,10)>=start&&r.time.slice(0,10)<=end&&(model==="All models"||r.model===model)).sort((a,b)=>b.time.localeCompare(a.time));
  const b=data?.bench,c=b?.cache.find(x=>x.t===(threshold??data?.threshold))??b?.cache[0],n=data?.history&&!invalid?rows.length:null;
  const comparison=b?.comparison.status==="ready"?b.comparison:null;
- const factor=currency==="USD"?1:Number(rate), money=(v:number|null)=>v==null||!Number.isFinite(factor)||factor<=0?null:new Intl.NumberFormat("en",{style:"currency",currency,maximumFractionDigits:6}).format(v*factor);
- const total=sum(rows.map(r=>r.cost)),lat=rows.flatMap(r=>r.ms==null?[]:[r.ms]).sort((a,b)=>a-b),pct=(p:number)=>lat.length?lat[Math.ceil(lat.length*p)-1]:null;
+ const factor=currency==="USD"?1:Number(rate);
+ const lat=rows.flatMap(r=>r.ms==null?[]:[r.ms]).sort((a,b)=>a-b),pct=(p:number)=>lat.length?lat[Math.ceil(lat.length*p)-1]:null;
  const models=[...new Set([data?.small,data?.large,...(data?.history??[]).map(r=>r.model)].filter((x):x is string=>!!x))];
  const daily=new Map<string,RequestRow[]>();for(const r of rows){const d=r.time.slice(0,10);daily.set(d,[...(daily.get(d)??[]),r])}
- const trend=[...daily].sort(([a],[b])=>a.localeCompare(b)).map(([date,rs])=>({date,requests:rs.length,cost:sum(rs.map(r=>r.cost))}));
+ const trend=[...daily].sort(([a],[b])=>a.localeCompare(b)).map(([date,rs])=>({date,requests:rs.length}));
  const tile=(l:string,v:ReactNode,s="Historical")=><Tile key={l} label={l} value={v} source={s}/>;
  const bench=(l:string,v:ReactNode)=>tile(l,v,"Benchmark"); const unavailable=(l:string)=>tile(l,null,"Unmeasured");
- const convertedTrend = trend.map(point => ({
-   ...point, cost: point.cost != null && Number.isFinite(factor) && factor > 0 ? point.cost * factor : null,
- }));
+ const convertedTrend = trend.map(point => {
+   const dailyCost = costs?.daily.find(item=>item.date===point.date);
+   return {...point,cost:dailyCost?.cost==null?null:Number(dailyCost.cost),costDisplay:dailyCost?.display};
+ });
  const chart = (cost = false) => {
    const hasPoints = cost ? convertedTrend.some(point => point.cost != null) : trend.length > 0;
    return (
@@ -72,7 +74,7 @@ export default function App1(){
            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={chartTick}
                   minTickGap={24} tickMargin={8} tickFormatter={date => String(date).slice(5)}/>
            <YAxis width={56} axisLine={false} tickLine={false} tick={chartTick} allowDecimals={cost}/>
-           <Tooltip contentStyle={tooltipStyle}/>
+           <Tooltip contentStyle={tooltipStyle} formatter={(value,_name,item)=>cost?(item.payload.costDisplay??"Unavailable"):value}/>
            <Area name={cost ? "Estimated cost (" + currency + ")" : "Requests"} dataKey={cost ? "cost" : "requests"}
                  stroke="#215740" strokeWidth={2} fill="#abdc8f" fillOpacity={0.32} dot={{r:3}}
                  isAnimationActive={!reducedMotion} animationDuration={220}/>
@@ -104,7 +106,7 @@ export default function App1(){
  <div className="hero-number">{b?.queries??"—"}</div><p className="center">Routing queries · synthetic benchmark</p>
  <div className="hero-actions"><button onClick={()=>P(2)}>Routing <ArrowUpRight size={16}/></button><button onClick={()=>P(1)}>Cache <Database size={16}/></button></div>
  <div className="wallet-grid"><article><Route/><strong>{b?.simple??"—"}</strong>Simple queries</article><article><LayoutDashboard/><strong>{b?.complex??"—"}</strong>Complex queries</article><article className="lime"><DatabaseZap/><strong>{c?.avoided??"—"}</strong>API calls avoided</article><article><Activity/><strong>{b?.escalations??"—"}</strong>Escalations</article></div></section>
- <div className="four surface">{tile("Total requests",n)}{tile("Estimated API cost",money(total),"Historical estimate")}{bench("Cache hit rate",percent(c?.hitRate))}{unavailable("Estimated cost avoided")}</div>
+ <div className="four surface">{tile("Total requests",n)}{tile("Estimated API cost",costs?.display.estimated_cost_usd,"Historical estimate")}{bench("Cache hit rate",percent(c?.hitRate))}{unavailable("Estimated cost avoided")}</div>
  <section className="guide surface"><h2>Router workspace</h2><div className="orb" aria-hidden="true"/><strong>Explore your routing data</strong><div className="suggest">{[1,2,3].map(i=><button key={i} onClick={()=>P(i)}>{pages[i]} ↗</button>)}</div><div className="guide-bar"><Sparkles size={17}/><span key={historicScope}>{historicScope}</span><button onClick={()=>showFilters(!filters)}>Filters <SlidersHorizontal size={15}/></button></div></section>
  <section className="mix surface"><h2>Model distribution</h2><small>Synthetic benchmark · initial selections</small><div className="mix-body"><dl className="legend"><div><dt>Small</dt><dd>{b?.small??"—"}</dd></div><div><dt>Large</dt><dd>{b?.large??"—"}</dd></div></dl><div className="donut" style={{background:b?.queries && b.small!=null && b.large!=null?'conic-gradient(#09362e 0 '+(100*b.small/b.queries)+'%, #a5e773 0)':'#e8ebe7'}}><span>{b?.queries??"—"}<small>queries</small></span></div></div></section>
  <section className="balance surface"><h2>Cache outcomes</h2><small>Synthetic benchmark · threshold {c?.t??"—"}</small><div className="outcomes"><div><Database/> Hits <b>{c?.hits??"—"}</b></div><div><Route/> Misses <b>{c?.misses??"—"}</b></div></div></section>
@@ -168,14 +170,14 @@ export default function App1(){
  {page===3&&<>
  <p className="context">Synthetic benchmark estimates · USD · {comparison?.query_count ?? "Unavailable"} paired queries · cold cache start</p>
  <div className="tiles">
-   {bench("Baseline cost",usd(comparison?.baseline.estimated_cost_usd))}
-   {bench("Optimized cost",usd(comparison?.optimized.estimated_cost_usd))}
-   {bench("Estimated savings",usd(comparison?.savings_usd))}
-   {bench("Savings percentage",comparison?.savings_percentage==null?null:Number(comparison.savings_percentage).toFixed(2)+"%")}
+   {bench("Baseline cost",comparison?.baseline.display.estimated_cost_usd)}
+   {bench("Optimized cost",comparison?.optimized.display.estimated_cost_usd)}
+   {bench("Estimated savings",comparison?.savings_display)}
+   {bench("Savings percentage",comparison?.savings_percentage_display)}
  </div>
  <div className="tiles">
-   {bench("Baseline cost per query",usd(comparison?.baseline.average_cost_per_query_usd))}
-   {bench("Optimized cost per query",usd(comparison?.optimized.average_cost_per_query_usd))}
+   {bench("Baseline cost per query",comparison?.baseline.display.average_cost_per_query_usd)}
+   {bench("Optimized cost per query",comparison?.optimized.display.average_cost_per_query_usd)}
  </div>
  {(b?.comparison.issues ?? ["The paired benchmark report is unavailable."]).map(issue=><p className="empty" key={issue}>{issue}</p>)}
  {comparison&&<>
@@ -193,11 +195,11 @@ export default function App1(){
    </Panel>
    <Panel title="Estimated scenario cost" note="Synthetic benchmark · complete totals in USD">
      {comparison.baseline.complete&&comparison.optimized.complete?<ResponsiveContainer width="100%" height={210}>
-       <BarChart accessibilityLayer data={[{scenario:"Baseline",cost:Number(comparison.baseline.estimated_cost_usd)},{scenario:"Optimized",cost:Number(comparison.optimized.estimated_cost_usd)}]} margin={{top:12,right:16,left:0,bottom:8}}>
+       <BarChart accessibilityLayer data={[{scenario:"Baseline",cost:Number(comparison.baseline.estimated_cost_usd),display:comparison.baseline.display.estimated_cost_usd},{scenario:"Optimized",cost:Number(comparison.optimized.estimated_cost_usd),display:comparison.optimized.display.estimated_cost_usd}]} margin={{top:12,right:16,left:0,bottom:8}}>
          <CartesianGrid vertical={false} stroke="#dce5df" strokeDasharray="3 4"/>
          <XAxis dataKey="scenario" tick={chartTick} axisLine={false} tickLine={false}/>
          <YAxis tick={chartTick} axisLine={false} tickLine={false} width={70}/>
-         <Tooltip contentStyle={tooltipStyle} formatter={value=>usd(String(value))}/>
+         <Tooltip contentStyle={tooltipStyle} formatter={(_value,_name,item)=>item.payload.display??"Unavailable"}/>
          <Bar name="Estimated USD" dataKey="cost" fill="#90ac42" radius={[5,5,0,0]} isAnimationActive={!reducedMotion} animationDuration={220}/>
        </BarChart>
      </ResponsiveContainer>:<p className="empty">The cost chart requires complete estimates for both scenarios. Known subtotals appear below.</p>}
@@ -210,21 +212,27 @@ export default function App1(){
    {bench("Unsafe cache hits",comparison.cache_outcomes.false_hit)}
  </div>
  <div className="tiles">
-   {bench("Baseline known subtotal",usd(comparison.baseline.known_cost_subtotal_usd))}
-   {bench("Optimized known subtotal",usd(comparison.optimized.known_cost_subtotal_usd))}
-   {bench("Escalation expenditure",usd(comparison.escalation.estimated_cost_usd))}
-   {bench("Embedding expenditure",usd(comparison.embedding.estimated_cost_usd))}
+   {bench("Baseline known subtotal",comparison.baseline.display.known_cost_subtotal_usd)}
+   {bench("Optimized known subtotal",comparison.optimized.display.known_cost_subtotal_usd)}
+   {bench("Escalation expenditure",comparison.escalation.display.estimated_cost_usd)}
+   {bench("Embedding expenditure",comparison.embedding.display.estimated_cost_usd)}
  </div>
  <p className="context">Unpriced requests · baseline {comparison.baseline.unknown_cost_requests}, optimized {comparison.optimized.unknown_cost_requests}.
-   {" "}Escalation known subtotal {usd(comparison.escalation.known_cost_subtotal_usd)}.
-   {" "}Embedding known subtotal {usd(comparison.embedding.known_cost_subtotal_usd)} includes lookup and storage.</p>
+   {" "}Escalation known subtotal {comparison.escalation.display.known_cost_subtotal_usd}.
+   {" "}Embedding known subtotal {comparison.embedding.display.known_cost_subtotal_usd} includes lookup and storage.</p>
+ <div className="tiles">
+   {bench("Input token cost",comparison.optimized.components.input_cost_usd.display.estimated_cost_usd)}
+   {bench("Cached input cost",comparison.optimized.components.cached_input_cost_usd.display.estimated_cost_usd)}
+   {bench("Output token cost",comparison.optimized.components.output_cost_usd.display.estimated_cost_usd)}
+ </div>
+ <p className="context">Input costs include embeddings. Cached input is priced separately. Output costs include thinking tokens. Missing components remain unavailable.</p>
  <div className="panels">
    {comparison.by_model.map(row=><Panel key={row.model} title={row.model} note="Synthetic benchmark · model costs in USD">
      {[["Baseline",row.baseline],["Optimized",row.optimized]].map(([name,metrics])=>{
        const metric=metrics as typeof row.baseline;
        return <div key={String(name)}>
-         <p className="line"><span>{String(name)}</span><strong>{usd(metric.estimated_cost_usd)??"Unavailable"}</strong></p>
-         <p className="context">Known subtotal {usd(metric.known_cost_subtotal_usd)} · {metric.unknown_cost_requests} of {metric.requests} requests unpriced</p>
+         <p className="line"><span>{String(name)}</span><strong>{metric.display.estimated_cost_usd??"Unavailable"}</strong></p>
+         <p className="context">Known subtotal {metric.display.known_cost_subtotal_usd} · {metric.unknown_cost_requests} of {metric.requests} requests unpriced</p>
        </div>;
      })}
    </Panel>)}
@@ -240,14 +248,15 @@ export default function App1(){
  </details>
  </>}
  <h2 className="metric-group">Historical expenditure</h2>
- <div className="tiles">{tile("Total estimated expenditure",money(total),"Historical estimate")}{tile("Cost per request",money(total!=null&&rows.length?total/rows.length:null),"Historical estimate")}{unavailable("Input token cost")}{unavailable("Output token cost")}</div>
- <div className="panels">{chart(true)}<Panel title="Historical cost by model" note={"Historical estimates · "+currency}>{models.filter(m=>model==="All models"||model===m).map(m=><p className="line" key={m}>{m}<b>{money(sum(rows.filter(r=>r.model===m).map(r=>r.cost)))??"Unavailable"}</b></p>)}</Panel></div>
- <p className="context">Historical savings are unavailable because request logs lack paired baseline usage and linked cache outcomes. Live measurements require a connected request source. Benchmark values use USD.</p>
+ <div className="tiles">{tile("Total estimated expenditure",costs?.display.estimated_cost_usd,"Historical estimate")}{tile("Cost per request",costs?.display.average_cost_per_query_usd,"Historical estimate")}{tile("Input token cost",costs?.components.input_cost_usd.display.estimated_cost_usd,"Historical estimate")}{tile("Output token cost",costs?.components.output_cost_usd.display.estimated_cost_usd,"Historical estimate")}</div>
+ <div className="tiles">{tile("Cached input cost",costs?.components.cached_input_cost_usd.display.estimated_cost_usd,"Historical estimate")}{tile("Embedding expenditure",costs?.embedding.display.estimated_cost_usd,"Historical estimate")}{tile("Known cost subtotal",costs?.display.known_cost_subtotal_usd,"Historical estimate")}{tile("Requests with unknown cost",costs?.unknown_cost_requests,"Historical")}</div>
+ <div className="panels">{chart(true)}<Panel title="Historical cost by model" note={"Historical estimates · "+currency}>{models.filter(m=>model==="All models"||model===m).map(m=><p className="line" key={m}>{m}<b>{costs?.by_model.find(item=>item.model===m)?.display.estimated_cost_usd??"Unavailable"}</b></p>)}</Panel></div>
+ <p className="context">Older records may lack token cost breakdowns. Historical savings are unavailable because request logs lack paired baseline usage and linked cache outcomes. Live measurements require a connected request source. Benchmark values use USD.</p>
  </>}
  {page===4&&<><h2 className="metric-group">Request latency</h2><div className="tiles">{tile("Average latency",ms(avg(lat)))}{[50,95,99].map(p=>tile("P"+p+" latency",ms(pct(p/100))))}</div><h2 className="metric-group">Processing time</h2><div className="tiles">{bench("Cache lookup latency",ms(c?.lookup))}{["Embedding","Generation"].map((k)=>tile(k+" latency",ms(avg(rows.filter(r=>(r.kind==="embedding")===(k==="Embedding")&&r.ms!=null).map(r=>r.ms!)))))}{unavailable("Escalation overhead")}</div><h2 className="metric-group">Usage and quality</h2><div className="tiles">{tile("Input tokens",sum(rows.map(r=>r.input)))}{tile("Output tokens",sum(rows.map(r=>r.output)))}{bench("Final answer-quality pass rate",ratio(b?.passed,b?.queries))}</div></>}
  {page===5&&<div className="tiles system-list">{tile("Small Gemini model",data?.small,"Configured")}{tile("Large Gemini model",data?.large,"Configured")}{tile("Cache schema",data?.schema,"Configuration")}{tile("Application cache version",data?.version,"Configuration")}{tile("Similarity threshold",data?.threshold,"Default")}{tile("Evaluation threshold",data?.evaluation,"Default")}{tile("Database status","Not probed","Local")}{tile("API connectivity","Not probed","Live")}{unavailable("Application version")}{tile("Last successful request",rows.find(r=>r.status==="success")?.time)}</div>}
  </div>
  <div className="sources" aria-label="Data sources"><span>Live · disconnected</span><span data-ready={data?.hs==="Ready"}>Historical · {data?.hs??"Waiting"}</span><span data-ready={data?.bs==="Ready"}>Synthetic benchmark · {data?.bs??"Waiting"}</span></div>
- <p className="context" role="status">{error|| (invalid?"Choose a valid date range.":currency!=="USD"&&factor<=0?"Enter a positive conversion rate.":"Date and model filters apply to historical requests. Benchmark results cover the full offline run.")}</p>
+ <p className="context" role="status">{error|| (invalid?"Choose a valid date range.":currency!=="USD"&&(!Number.isFinite(factor)||factor<=0)?"Enter a positive conversion rate.":"Date and model filters apply to historical requests. Benchmark results cover the full offline run.")}</p>
  </div></div></main>
 }

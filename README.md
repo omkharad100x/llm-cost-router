@@ -74,7 +74,8 @@ llm-cost-router/
 ├── gemini_models.py            # Explicit small/large calls and structured responses
 ├── model_config.py             # Model-name environment configuration
 ├── instrumentation.py          # SDK call timing, usage, pricing, JSONL records
-├── model_pricing.json          # Configurable per-model USD rates
+├── model_pricing.json          # Verified standard text USD rates and validity
+├── money.py                    # Exact Decimal arithmetic and shared money display
 ├── query_complexity.py         # Independent deterministic complexity classifier
 ├── complexity_config.py        # Validated classifier thresholds and weights
 ├── embeddings.py               # Gemini query embeddings and normalization
@@ -460,9 +461,9 @@ The immutable `ModelResponse` contains `text`, requested `model`, `role`,
 `latency_ms`, `estimated_cost_usd`, `cost_status`, and `timestamp_utc`.
 Unknown metrics remain `None`; explicit zero counts remain zero.
 Costs retain the existing decimal-string representation and pricing semantics.
-The current pricing file covers the default small model but not the default
-large model. Large calls therefore return `pricing_unavailable` and no cost
-until an appropriate entry is supplied through the existing pricing mapping.
+The pricing file covers both default models with verified standard text rates.
+Expired pricing entries are unavailable. Missing usage still prevents a complete
+estimate, even when a model's rates are configured.
 Custom model IDs need their own rates; no other model's price is substituted.
 
 A new opt-in `InstrumentedGenerator.generate_content_with_metrics()` returns
@@ -558,9 +559,8 @@ Unknown cost remains `None`, never zero. Available decimal-string costs and
 all usage fields pass through unchanged. A reported zero stays zero.
 
 The router performs no price ranking, budget optimization, or quality comparison
-and always records `cost_optimized=False`. The default large model remains
-unpriced in the supplied pricing file. Missing usage or invalid pricing can
-also prevent an estimate even when an entry is present.
+and always records `cost_optimized=False`. Missing usage or invalid/expired
+pricing can prevent an estimate even when a model is configured.
 
 | Example | Default classification | Role |
 | --- | --- | --- |
@@ -739,8 +739,8 @@ total. Aggregate cost status is:
 
 `attempt_cost_statuses` preserves the specific source of missing cost. Per-attempt
 responses retain token counts, latency, cost, and UTC timestamps unchanged.
-The current price file does not price the default large model, so an escalated
-request normally has unknown total cost until its pricing is configured.
+Both default generation models have verified rates. An escalated request still
+has unknown total cost if any attempt lacks sufficient usage or valid pricing.
 
 ### Errors, examples, and limits
 
@@ -871,8 +871,8 @@ threshold experiments together as one production workload.
 
 Costs reuse instrumented estimates with the existing price file and explicit
 synthetic SDK token fixtures. No usage is inferred from text. Embedding usage
-is unavailable in the supplied vectors, one generation fixture omits usage,
-and the default large model has no configured rate. Accordingly, total costs
+is unavailable in the supplied vectors, and one generation fixture omits usage.
+Accordingly, total costs
 remain `null` when incomplete; `known_cost_subtotal_usd` is clearly marked as
 partial. Counts and statuses identify missing estimates. Per-field token totals
 also remain `null` if any request lacks that field. Reported zero stays zero.
@@ -890,11 +890,76 @@ The cache benchmark has one candidate per namespace, no growing corpus,
 concurrency, eviction, or expiry load. It does not establish a best real-world
 threshold. Model output, usage, and quality are synthetic; generation errors and
 API retry/load behavior are not benchmarked. Default pipeline total cost and
-token totals are unknown; the known cost subtotal is `$0.0003125` across five
+token totals are unknown; the known cost subtotal is `$0.001325` across eleven
 priced mock attempts. No actual API spending, factual quality, or production
 cost reduction is claimed. CLI and cache/routing application integration remain
 separate from this benchmark-only orchestration.
 
+
+## Verified token accounting (Day 3, Task 4)
+
+Standard paid **text** rates were verified on **2026-11-06** against the
+[official Gemini API pricing table](https://ai.google.dev/gemini-api/docs/pricing?hl=en).
+Prices below are USD per million tokens.
+
+| Model | Ordinary input | Cached input | Output including thoughts |
+| --- | ---: | ---: | ---: |
+| `gemini-3.1-flash-lite` | 0.25 | 0.025 | 1.50 |
+| `gemini-3.8-flash` | 0.75 | 0.075 | 3.75 |
+| `gemini-embedding-001` | 0.15 | Not applicable | Not applicable |
+
+The large model's listed rates apply through **2026-12-31**. `load_pricing`
+excludes that entry after its documented end date until pricing is reviewed.
+Existing recorded amounts keep their original pricing snapshot; they are never
+retroactively repriced. Custom models require verified entries of their own.
+
+SDK prompt tokens include cached input. The text estimate is therefore:
+
+```text
+((prompt - cached) × input_rate
+ + cached × cached_input_rate
+ + (candidate_output + thoughts) × output_rate) / 1,000,000
+```
+
+Raw input, candidate output, thoughts, cached input, tool-use and total counters
+are preserved separately. Total tokens are a consistency check, not another
+billable component. If thoughts are absent, a consistent total minus prompt may
+supply billed output without inventing a raw thoughts count. Missing cached-token
+counts leave the input split unknown, except that a zero prompt cannot contain
+cached input. Positive tool-use counts have no supported text-only billing policy,
+so their costs remain unavailable. Malformed or contradictory usage is not priced.
+
+Generation records now include `input_cost_usd`, `cached_input_cost_usd`, and
+`output_cost_usd`. The first excludes cached tokens; output includes thoughts.
+Embedding costs use reported embedding token statistics independently and have
+no output charge. Unknown usage is never inferred from query length.
+
+`money.py` centralizes exact Decimal sums, products, currency conversion and
+display for both dashboards. Financial JSON values remain decimal strings;
+JavaScript converts only chart coordinates to floating point. Division uses
+28 significant digits and half-even rounding. Display rounds to eight decimal
+places; smaller nonzero amounts are shown as less than the display precision.
+Component subtotals and complete totals are distinct. Older records keep their
+recorded total but show unavailable component breakdowns.
+
+Hand-checked examples at the small-model rates:
+
+- 1,000 prompt tokens (500 cached), 100 candidate tokens, no thoughts: **$0.0002875**.
+- 1,000 uncached prompt tokens, 100 candidate tokens and 50 thoughts: **$0.000475**.
+- Ten embedding tokens at the embedding rate: **$0.0000015**.
+
+Both dashboards use shared Python accounting for historical and benchmark costs.
+Historical averages divide by API requests because logs lack query linkage;
+paired benchmark averages divide by all workload queries, including cache hits.
+Missing data sources are unavailable. An observed empty dataset has zero total
+and an undefined average. Currency conversion uses a user-supplied rate, not a
+live exchange-rate service. Synthetic benchmarks remain separate from history.
+
+Offline tests cover these examples, malformed/missing usage, unpriced cached
+input, large counts, precision, rounding, escalation, cache hits, unsafe savings,
+price expiry, and matching dashboard projections. Tool/grounding fees, cache
+storage charges, multimodal pricing, batch/free tiers, taxes and invoice
+reconciliation are outside this standard text estimate.
 
 ## Paired baseline and optimized cost comparison
 
@@ -922,16 +987,17 @@ queries twice, in the same order for both scenarios, using the existing
   Zero-query totals are zero, per-query costs are unavailable, and a zero baseline
   has an undefined savings percentage. Negative savings remain negative.
 
-The supplied pricing file lacks `gemini-3.8-flash` rates. Embedding usage and one
-small-role usage fixture are also missing. The default paired run records 16 baseline
-generations, 15 optimized generations, 6 safe hits, and 5 escalations. Its known
-optimized subtotal is $0.000375. Total cost and monetary savings are unavailable.
+The default paired run records 16 baseline generations, 15 optimized generations,
+6 safe hits, and 5 escalations. With the verified rates, baseline cost is $0.0027
+and the optimized known subtotal is $0.001725. Embedding usage and one small-role
+usage fixture remain missing, so optimized total cost and monetary savings are
+unavailable. These are synthetic estimates, not actual API expenditure.
 
 Generate a fresh reproducible report with the existing CLI. Choose a new output
 path because the command protects existing files.
 
 ```powershell
-.\.venv\Scripts\python.exe -B benchmarks.py --output benchmark_report_task3.json
+.\.venv\Scripts\python.exe -B benchmarks.py --output benchmark_report_task4.json
 .\.venv\Scripts\python.exe -B -m pytest tests -q
 cd frontend
 npm run build

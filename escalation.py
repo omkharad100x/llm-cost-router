@@ -1,7 +1,7 @@
 """One quality-based escalation using the existing router, models, and evaluator."""
 
 from dataclasses import dataclass, replace
-from decimal import Decimal
+from money import add
 import math
 from numbers import Real
 
@@ -57,7 +57,7 @@ def _aggregate(attempts):
         status = "not_requested"
     elif all(value is not None for value in costs):
         # Sum the instrumented USD amounts, never recalculate rates or round per call.
-        cost = str(sum((Decimal(value) for value in costs), Decimal(0)))
+        cost = str(add(costs))
         status = "estimated"
     elif any(value in ("pricing_unavailable", "cached_pricing_unavailable") for value in statuses):
         status = "pricing_unavailable"

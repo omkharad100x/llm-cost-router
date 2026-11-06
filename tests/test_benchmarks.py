@@ -167,14 +167,14 @@ def test_unknown_cost_is_not_zero_or_partial_total(status):
     assert result["cost"]["status"] == ("pricing_unavailable" if status == "pricing_unavailable" else "incomplete")
 
 
-def test_default_report_cost_is_incomplete_and_does_not_guess_large_rates(report):
+def test_default_report_prices_verified_models_but_preserves_missing_usage(report):
     result = report["pipeline_benchmark"]["request_metrics"]
-    assert result["cost"]["status"] == "pricing_unavailable"
+    assert result["cost"]["status"] == "incomplete"
     assert result["cost"]["estimated_cost_usd"] is None
-    assert result["cost"]["unknown_cost_requests"] == 7
-    assert Decimal(result["cost"]["known_cost_subtotal_usd"]) == Decimal("0.0003125")
+    assert result["cost"]["unknown_cost_requests"] == 1
+    assert Decimal(result["cost"]["known_cost_subtotal_usd"]) == Decimal("0.001325")
     assert result["usage"]["input_tokens"] is result["usage"]["output_tokens"] is None
-    assert report["configuration"]["models"]["large_model"] not in report["configuration"]["pricing"]
+    assert report["configuration"]["models"]["large_model"] in report["configuration"]["pricing"]
 
 
 def test_missing_usage_and_latency_are_aggregated_independently():

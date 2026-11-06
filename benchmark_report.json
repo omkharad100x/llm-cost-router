@@ -10,9 +10,10 @@
     }
   },
   "implementation_sha256": {
-    "benchmarks.py": "483046b4aa8ebc979cdd2b0f20b0c7156cd455ca9d9a731b239e2802f62545d4",
-    "benchmark_accounting.py": "932f6e46efca1ae8a70c910920ada4a9fdfc47581e849dd345af663691ca3da7",
-    "cost_comparison.py": "02b34a520832d2b9c74923eb7f135192fe06acbd8df976524177c0999441f6a9",
+    "benchmarks.py": "88862469d5dc291d377ba2086403c5d661bb7e22345b1ab83f6028e543c73580",
+    "money.py": "ac39e6e971965dda51fe3b27a5b1114ae8405ce06e16984ade848122e6f21b26",
+    "benchmark_accounting.py": "d800ceda8c229d401ad66499dd0fd95cbd7cf1a5d20e2b8ecee1d789dd62a60e",
+    "cost_comparison.py": "3cfedae8ccef4422b2907cdeece76b0c35b5c466e0be3d3c9f83acac1db5ed96",
     "semantic_cache.py": "f54ac174ac67e759d64d46622c966df794d5d15800a47a14aae27f71d21d7b9f",
     "cache_schema.py": "5869d69fb1cd2a889edbc06f9823b688908f32d666e424497c1e805818c82206",
     "cache_config.py": "426909b5d0c5eef5bf3e8235a711cb0072b3c4091ba26c4f538128b1b31ea194",
@@ -22,12 +23,12 @@
     "model_router.py": "6cd68d60537b9932cd35741997a4210a56fffd04714d6306d46b017ed7286bfa",
     "gemini_models.py": "d17f71b3084aae397a1168eadd0b5a678bdfe55f0c38b991fc91b9d26c84fdeb",
     "model_config.py": "db30400def64e42e05368fbaaa7e98f95cf55149cc944d0ab486e095e1cc2264",
-    "instrumentation.py": "d6a89f8acf1003e929082141254c3c8eacef4ab5cc82c35d70093bd159c2b9ef",
+    "instrumentation.py": "40ee7aacd147597b8c87136fd5e26e2ad62eff93ccc1ef9eb1d1eda573bc4bc8",
     "query_complexity.py": "3e1e3b45bcbdafc0d88e1e0982ff51b1fe01d2cdb79d14424e9d4c7f138b43a2",
     "complexity_config.py": "08a1f36502a3f8eba627c6a12129be431744f82fb84702415f0428284ef4cc47",
     "answer_evaluator.py": "f2f6c77fdf2f7cede36897cc92435bf98ddb69a2151004ab284a033681fc485c",
     "evaluation_config.py": "f1132cdb7516353d9c67141649c65ebc02e955b4c532c2c7c3f20ec74c376f75",
-    "escalation.py": "f5e27a941531699569df2d1b1fceb77bf34f82b99faeb7bafb83eaa0c6910af5"
+    "escalation.py": "690b84231c10bf983dfa962eea1186e6ef3a64672a29bee144dea10bef3b8b16"
   },
   "configuration": {
     "thresholds": [
@@ -130,12 +131,28 @@
         "input_usd_per_million": "0.25",
         "output_usd_per_million": "1.50",
         "cached_input_usd_per_million": "0.025",
-        "pricing_version": "standard-text-2026-11-03"
+        "pricing_version": "standard-text-2026-11-03",
+        "source": "https://ai.google.dev/gemini-api/docs/pricing?hl=en",
+        "verified_on": "2026-11-06",
+        "billing_scope": "standard-paid-text"
       },
       "gemini-embedding-001": {
         "input_usd_per_million": "0.15",
         "output_usd_per_million": "0",
-        "pricing_version": "standard-text-2026-11-03"
+        "pricing_version": "standard-text-2026-11-03",
+        "source": "https://ai.google.dev/gemini-api/docs/pricing?hl=en",
+        "verified_on": "2026-11-06",
+        "billing_scope": "standard-paid-text"
+      },
+      "gemini-3.8-flash": {
+        "input_usd_per_million": "0.75",
+        "output_usd_per_million": "3.75",
+        "cached_input_usd_per_million": "0.075",
+        "pricing_version": "standard-text-verified-2026-11-06",
+        "source": "https://ai.google.dev/gemini-api/docs/pricing?hl=en#gemini-3.8-flash",
+        "verified_on": "2026-11-06",
+        "valid_through": "2026-12-31",
+        "billing_scope": "standard-paid-text"
       }
     }
   },
@@ -147,8 +164,8 @@
     "sha256": {
       "pairs": "55b1e89092825afce319464e45f26561d53284a0db031d66f0dfbfd8bb73fbc4",
       "embeddings": "134374f80404ba6d7995dbe2226c2e49becd274da60a4bf6a1e6d5dca2f589b4",
-      "fixtures": "5f6514fc4405cc88302e8d903063e16917634281313ccb911e1a7aa7a482c313",
-      "pricing": "f5d21837662db041c549d3c10872a731bb8698c93b48399383f59a477c317998"
+      "fixtures": "92e6231af5cb84a8e46c6abea579c5de28c5e310de8cd1492f92c540d0bf877c",
+      "pricing": "f79e5509a970dcecbd1c05b3f494c16096938349ea808af38cb8ae4a4d904964"
     }
   },
   "similarity_only": [
@@ -1170,8 +1187,8 @@
         "repeat_hits_after_first_lookup": 19
       },
       "latency": {
-        "total_lookup_ms": 22.624699999596487,
-        "average_lookup_ms": 0.5141977272635565,
+        "total_lookup_ms": 39.578700001584366,
+        "average_lookup_ms": 0.8995159091269174,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1179,7 +1196,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0013125",
+          "known_cost_subtotal_usd": "0.00131250",
           "unknown_cost_requests": 21,
           "complete": false,
           "status": "incomplete",
@@ -1188,25 +1205,45 @@
             "usage_unavailable": 21
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00052500",
+            "unknown_cost_requests": 21
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00078750",
+            "known_cost_subtotal_usd": "0.00078750",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 11.295199997675809,
-          "average_per_request_ms": 0.26893333327799546,
-          "average_per_query_ms": 0.5134181817125367,
+          "total_ms": 23.756599985063076,
+          "average_per_request_ms": 0.5656333329776922,
+          "average_per_query_ms": 1.0798454538665034,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 21,
             "cost": {
-              "estimated_cost_usd": "0.0013125",
+              "estimated_cost_usd": "0.00131250",
               "average_cost_per_query_usd": "0.00005965909090909090909090909091",
-              "known_cost_subtotal_usd": "0.0013125",
+              "known_cost_subtotal_usd": "0.00131250",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1214,16 +1251,36 @@
                 "estimated": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00052500",
+                "known_cost_subtotal_usd": "0.00052500",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00078750",
+                "known_cost_subtotal_usd": "0.00078750",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 2100,
               "output_tokens": 420,
               "thinking_tokens": 105,
-              "billed_output_tokens": 525
+              "billed_output_tokens": 525,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 10.184899998876062,
-              "average_per_request_ms": 0.48499523804171724,
-              "average_per_query_ms": 0.46294999994891195,
+              "total_ms": 21.475299981830176,
+              "average_per_request_ms": 1.0226333324681036,
+              "average_per_query_ms": 0.976149999174099,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1240,16 +1297,36 @@
                 "usage_unavailable": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 21
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.1102999987997464,
-              "average_per_request_ms": 0.052871428514273636,
-              "average_per_query_ms": 0.05046818176362484,
+              "total_ms": 2.2813000032329,
+              "average_per_request_ms": 0.10863333348728095,
+              "average_per_query_ms": 0.10369545469240454,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1260,7 +1337,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0003750",
+          "known_cost_subtotal_usd": "0.00037500",
           "unknown_cost_requests": 42,
           "complete": false,
           "status": "incomplete",
@@ -1269,25 +1346,45 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00015000",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00022500",
+            "known_cost_subtotal_usd": "0.00022500",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.4910000004419999,
-          "average_per_request_ms": 0.031062500009208332,
-          "average_per_query_ms": 0.03388636364640909,
+          "total_ms": 2.3997000098461285,
+          "average_per_request_ms": 0.049993750205127675,
+          "average_per_query_ms": 0.05453863658741201,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 6,
             "cost": {
-              "estimated_cost_usd": "0.0003750",
+              "estimated_cost_usd": "0.00037500",
               "average_cost_per_query_usd": "0.000008522727272727272727272727273",
-              "known_cost_subtotal_usd": "0.0003750",
+              "known_cost_subtotal_usd": "0.00037500",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1295,16 +1392,36 @@
                 "estimated": 6
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00015000",
+                "known_cost_subtotal_usd": "0.00015000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00022500",
+                "known_cost_subtotal_usd": "0.00022500",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 600,
               "output_tokens": 120,
               "thinking_tokens": 30,
-              "billed_output_tokens": 150
+              "billed_output_tokens": 150,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 750
             },
             "latency": {
-              "total_ms": 0.34970000024259207,
-              "average_per_request_ms": 0.058283333373765345,
-              "average_per_query_ms": 0.007947727278240729,
+              "total_ms": 0.5173000026843511,
+              "average_per_request_ms": 0.08621666711405851,
+              "average_per_query_ms": 0.01175681824282616,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1321,16 +1438,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.1413000001994078,
-              "average_per_request_ms": 0.02717380952855733,
-              "average_per_query_ms": 0.025938636368168358,
+              "total_ms": 1.8824000071617775,
+              "average_per_request_ms": 0.04481904778956613,
+              "average_per_query_ms": 0.04278181834458585,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1339,9 +1476,9 @@
       "generation_metrics": {
         "requests": 6,
         "cost": {
-          "estimated_cost_usd": "0.0003750",
+          "estimated_cost_usd": "0.00037500",
           "average_cost_per_query_usd": "0.000008522727272727272727272727273",
-          "known_cost_subtotal_usd": "0.0003750",
+          "known_cost_subtotal_usd": "0.00037500",
           "unknown_cost_requests": 0,
           "complete": true,
           "status": "estimated",
@@ -1349,25 +1486,45 @@
             "estimated": 6
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": "0.00015000",
+            "known_cost_subtotal_usd": "0.00015000",
+            "unknown_cost_requests": 0
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00022500",
+            "known_cost_subtotal_usd": "0.00022500",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": 600,
           "output_tokens": 120,
           "thinking_tokens": 30,
-          "billed_output_tokens": 150
+          "billed_output_tokens": 150,
+          "cached_input_tokens": 0,
+          "tool_use_tokens": 0,
+          "total_tokens": 750
         },
         "latency": {
-          "total_ms": 0.34970000024259207,
-          "average_per_request_ms": 0.058283333373765345,
-          "average_per_query_ms": 0.007947727278240729,
+          "total_ms": 0.5173000026843511,
+          "average_per_request_ms": 0.08621666711405851,
+          "average_per_query_ms": 0.01175681824282616,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 6,
             "cost": {
-              "estimated_cost_usd": "0.0003750",
+              "estimated_cost_usd": "0.00037500",
               "average_cost_per_query_usd": "0.000008522727272727272727272727273",
-              "known_cost_subtotal_usd": "0.0003750",
+              "known_cost_subtotal_usd": "0.00037500",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1375,16 +1532,36 @@
                 "estimated": 6
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00015000",
+                "known_cost_subtotal_usd": "0.00015000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00022500",
+                "known_cost_subtotal_usd": "0.00022500",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 600,
               "output_tokens": 120,
               "thinking_tokens": 30,
-              "billed_output_tokens": 150
+              "billed_output_tokens": 150,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 750
             },
             "latency": {
-              "total_ms": 0.34970000024259207,
-              "average_per_request_ms": 0.058283333373765345,
-              "average_per_query_ms": 0.007947727278240729,
+              "total_ms": 0.5173000026843511,
+              "average_per_request_ms": 0.08621666711405851,
+              "average_per_query_ms": 0.01175681824282616,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1403,16 +1580,36 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.1413000001994078,
-          "average_per_request_ms": 0.02717380952855733,
-          "average_per_query_ms": 0.025938636368168358,
+          "total_ms": 1.8824000071617775,
+          "average_per_request_ms": 0.04481904778956613,
+          "average_per_query_ms": 0.04278181834458585,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1429,16 +1626,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.1413000001994078,
-              "average_per_request_ms": 0.02717380952855733,
-              "average_per_query_ms": 0.025938636368168358,
+              "total_ms": 1.8824000071617775,
+              "average_per_request_ms": 0.04481904778956613,
+              "average_per_query_ms": 0.04278181834458585,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1690,8 +1907,8 @@
         "repeat_hits_after_first_lookup": 12
       },
       "latency": {
-        "total_lookup_ms": 19.421900000907044,
-        "average_lookup_ms": 0.4414068182024328,
+        "total_lookup_ms": 39.48560001299484,
+        "average_lookup_ms": 0.8974000002953372,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -1699,7 +1916,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0013125",
+          "known_cost_subtotal_usd": "0.00131250",
           "unknown_cost_requests": 21,
           "complete": false,
           "status": "incomplete",
@@ -1708,25 +1925,45 @@
             "usage_unavailable": 21
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00052500",
+            "unknown_cost_requests": 21
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00078750",
+            "known_cost_subtotal_usd": "0.00078750",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.7437999995308928,
-          "average_per_request_ms": 0.041519047607878404,
-          "average_per_query_ms": 0.07926363634231332,
+          "total_ms": 2.94539998867549,
+          "average_per_request_ms": 0.07012857115894024,
+          "average_per_query_ms": 0.13388181766706772,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 21,
             "cost": {
-              "estimated_cost_usd": "0.0013125",
+              "estimated_cost_usd": "0.00131250",
               "average_cost_per_query_usd": "0.00005965909090909090909090909091",
-              "known_cost_subtotal_usd": "0.0013125",
+              "known_cost_subtotal_usd": "0.00131250",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1734,16 +1971,36 @@
                 "estimated": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00052500",
+                "known_cost_subtotal_usd": "0.00052500",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00078750",
+                "known_cost_subtotal_usd": "0.00078750",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 2100,
               "output_tokens": 420,
               "thinking_tokens": 105,
-              "billed_output_tokens": 525
+              "billed_output_tokens": 525,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 1.2813999996978964,
-              "average_per_request_ms": 0.06101904760466174,
-              "average_per_query_ms": 0.058245454531722564,
+              "total_ms": 2.1995999923092313,
+              "average_per_request_ms": 0.10474285677663006,
+              "average_per_query_ms": 0.0999818178322378,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1760,16 +2017,36 @@
                 "usage_unavailable": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 21
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 0.4623999998329964,
-              "average_per_request_ms": 0.022019047611095067,
-              "average_per_query_ms": 0.021018181810590744,
+              "total_ms": 0.7457999963662587,
+              "average_per_request_ms": 0.03551428554125041,
+              "average_per_query_ms": 0.03389999983482994,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1780,7 +2057,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0012500",
+          "known_cost_subtotal_usd": "0.00125000",
           "unknown_cost_requests": 42,
           "complete": false,
           "status": "incomplete",
@@ -1789,25 +2066,45 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00050000",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00075000",
+            "known_cost_subtotal_usd": "0.00075000",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 2.1766000022580556,
-          "average_per_request_ms": 0.03510645164932348,
-          "average_per_query_ms": 0.04946818186950126,
+          "total_ms": 4.070500028319657,
+          "average_per_request_ms": 0.06565322626322027,
+          "average_per_query_ms": 0.0925113642799922,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 20,
             "cost": {
-              "estimated_cost_usd": "0.0012500",
+              "estimated_cost_usd": "0.00125000",
               "average_cost_per_query_usd": "0.00002840909090909090909090909091",
-              "known_cost_subtotal_usd": "0.0012500",
+              "known_cost_subtotal_usd": "0.00125000",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1815,16 +2112,36 @@
                 "estimated": 20
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00050000",
+                "known_cost_subtotal_usd": "0.00050000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00075000",
+                "known_cost_subtotal_usd": "0.00075000",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 2000,
               "output_tokens": 400,
               "thinking_tokens": 100,
-              "billed_output_tokens": 500
+              "billed_output_tokens": 500,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 2500
             },
             "latency": {
-              "total_ms": 1.1356000004525413,
-              "average_per_request_ms": 0.056780000022627064,
-              "average_per_query_ms": 0.02580909091937594,
+              "total_ms": 2.2175000194692984,
+              "average_per_request_ms": 0.11087500097346492,
+              "average_per_query_ms": 0.05039772771521133,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -1841,16 +2158,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.0410000018055143,
-              "average_per_request_ms": 0.02478571432870272,
-              "average_per_query_ms": 0.023659090950125326,
+              "total_ms": 1.8530000088503584,
+              "average_per_request_ms": 0.04411904782977044,
+              "average_per_query_ms": 0.04211363656478087,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1859,9 +2196,9 @@
       "generation_metrics": {
         "requests": 20,
         "cost": {
-          "estimated_cost_usd": "0.0012500",
+          "estimated_cost_usd": "0.00125000",
           "average_cost_per_query_usd": "0.00002840909090909090909090909091",
-          "known_cost_subtotal_usd": "0.0012500",
+          "known_cost_subtotal_usd": "0.00125000",
           "unknown_cost_requests": 0,
           "complete": true,
           "status": "estimated",
@@ -1869,25 +2206,45 @@
             "estimated": 20
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": "0.00050000",
+            "known_cost_subtotal_usd": "0.00050000",
+            "unknown_cost_requests": 0
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00075000",
+            "known_cost_subtotal_usd": "0.00075000",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": 2000,
           "output_tokens": 400,
           "thinking_tokens": 100,
-          "billed_output_tokens": 500
+          "billed_output_tokens": 500,
+          "cached_input_tokens": 0,
+          "tool_use_tokens": 0,
+          "total_tokens": 2500
         },
         "latency": {
-          "total_ms": 1.1356000004525413,
-          "average_per_request_ms": 0.056780000022627064,
-          "average_per_query_ms": 0.02580909091937594,
+          "total_ms": 2.2175000194692984,
+          "average_per_request_ms": 0.11087500097346492,
+          "average_per_query_ms": 0.05039772771521133,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 20,
             "cost": {
-              "estimated_cost_usd": "0.0012500",
+              "estimated_cost_usd": "0.00125000",
               "average_cost_per_query_usd": "0.00002840909090909090909090909091",
-              "known_cost_subtotal_usd": "0.0012500",
+              "known_cost_subtotal_usd": "0.00125000",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -1895,16 +2252,36 @@
                 "estimated": 20
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00050000",
+                "known_cost_subtotal_usd": "0.00050000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00075000",
+                "known_cost_subtotal_usd": "0.00075000",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 2000,
               "output_tokens": 400,
               "thinking_tokens": 100,
-              "billed_output_tokens": 500
+              "billed_output_tokens": 500,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 2500
             },
             "latency": {
-              "total_ms": 1.1356000004525413,
-              "average_per_request_ms": 0.056780000022627064,
-              "average_per_query_ms": 0.02580909091937594,
+              "total_ms": 2.2175000194692984,
+              "average_per_request_ms": 0.11087500097346492,
+              "average_per_query_ms": 0.05039772771521133,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -1923,16 +2300,36 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.0410000018055143,
-          "average_per_request_ms": 0.02478571432870272,
-          "average_per_query_ms": 0.023659090950125326,
+          "total_ms": 1.8530000088503584,
+          "average_per_request_ms": 0.04411904782977044,
+          "average_per_query_ms": 0.04211363656478087,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -1949,16 +2346,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.0410000018055143,
-              "average_per_request_ms": 0.02478571432870272,
-              "average_per_query_ms": 0.023659090950125326,
+              "total_ms": 1.8530000088503584,
+              "average_per_request_ms": 0.04411904782977044,
+              "average_per_query_ms": 0.04211363656478087,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2210,8 +2627,8 @@
         "repeat_hits_after_first_lookup": 7
       },
       "latency": {
-        "total_lookup_ms": 18.503500001315842,
-        "average_lookup_ms": 0.4205340909389964,
+        "total_lookup_ms": 29.840499999409076,
+        "average_lookup_ms": 0.6781931818047517,
         "source": "measured SQLite + mocked embedding + similarity; generation excluded"
       },
       "setup_metrics": {
@@ -2219,7 +2636,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0013125",
+          "known_cost_subtotal_usd": "0.00131250",
           "unknown_cost_requests": 21,
           "complete": false,
           "status": "incomplete",
@@ -2228,25 +2645,45 @@
             "usage_unavailable": 21
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00052500",
+            "unknown_cost_requests": 21
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00078750",
+            "known_cost_subtotal_usd": "0.00078750",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.705600000150298,
-          "average_per_request_ms": 0.04060952381310233,
-          "average_per_query_ms": 0.07752727273410445,
+          "total_ms": 2.6336000009905547,
+          "average_per_request_ms": 0.06270476192834654,
+          "average_per_query_ms": 0.11970909095411612,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 21,
             "cost": {
-              "estimated_cost_usd": "0.0013125",
+              "estimated_cost_usd": "0.00131250",
               "average_cost_per_query_usd": "0.00005965909090909090909090909091",
-              "known_cost_subtotal_usd": "0.0013125",
+              "known_cost_subtotal_usd": "0.00131250",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -2254,16 +2691,36 @@
                 "estimated": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00052500",
+                "known_cost_subtotal_usd": "0.00052500",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00078750",
+                "known_cost_subtotal_usd": "0.00078750",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 2100,
               "output_tokens": 420,
               "thinking_tokens": 105,
-              "billed_output_tokens": 525
+              "billed_output_tokens": 525,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 2625
             },
             "latency": {
-              "total_ms": 1.2451000002329238,
-              "average_per_request_ms": 0.0592904762015678,
-              "average_per_query_ms": 0.05659545455604199,
+              "total_ms": 1.9123000020044856,
+              "average_per_request_ms": 0.09106190485735646,
+              "average_per_query_ms": 0.08692272736384025,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2280,16 +2737,36 @@
                 "usage_unavailable": 21
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 21
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 0.4604999999173742,
-              "average_per_request_ms": 0.021928571424636868,
-              "average_per_query_ms": 0.020931818178062465,
+              "total_ms": 0.7212999989860691,
+              "average_per_request_ms": 0.034347618999336624,
+              "average_per_query_ms": 0.03278636359027587,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2300,7 +2777,7 @@
         "cost": {
           "estimated_cost_usd": null,
           "average_cost_per_query_usd": null,
-          "known_cost_subtotal_usd": "0.0018750",
+          "known_cost_subtotal_usd": "0.00187500",
           "unknown_cost_requests": 42,
           "complete": false,
           "status": "incomplete",
@@ -2309,25 +2786,45 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0.00075000",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00112500",
+            "known_cost_subtotal_usd": "0.00112500",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 2.7144000000589585,
-          "average_per_request_ms": 0.03770000000081887,
-          "average_per_query_ms": 0.06169090909224906,
+          "total_ms": 4.421300021931529,
+          "average_per_request_ms": 0.061406944749049015,
+          "average_per_query_ms": 0.10048409140753475,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 30,
             "cost": {
-              "estimated_cost_usd": "0.0018750",
+              "estimated_cost_usd": "0.00187500",
               "average_cost_per_query_usd": "0.00004261363636363636363636363636",
-              "known_cost_subtotal_usd": "0.0018750",
+              "known_cost_subtotal_usd": "0.00187500",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -2335,16 +2832,36 @@
                 "estimated": 30
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00075000",
+                "known_cost_subtotal_usd": "0.00075000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00112500",
+                "known_cost_subtotal_usd": "0.00112500",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 3000,
               "output_tokens": 600,
               "thinking_tokens": 150,
-              "billed_output_tokens": 750
+              "billed_output_tokens": 750,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 3750
             },
             "latency": {
-              "total_ms": 1.6945000011219236,
-              "average_per_request_ms": 0.05648333337073078,
-              "average_per_query_ms": 0.0385113636618619,
+              "total_ms": 2.8117000038037077,
+              "average_per_request_ms": 0.09372333346012358,
+              "average_per_query_ms": 0.06390227281372063,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           },
@@ -2361,16 +2878,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.019899998937035,
-              "average_per_request_ms": 0.02428333330802464,
-              "average_per_query_ms": 0.02317954543038716,
+              "total_ms": 1.6096000181278214,
+              "average_per_request_ms": 0.038323809955424316,
+              "average_per_query_ms": 0.036581818593814125,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2379,9 +2916,9 @@
       "generation_metrics": {
         "requests": 30,
         "cost": {
-          "estimated_cost_usd": "0.0018750",
+          "estimated_cost_usd": "0.00187500",
           "average_cost_per_query_usd": "0.00004261363636363636363636363636",
-          "known_cost_subtotal_usd": "0.0018750",
+          "known_cost_subtotal_usd": "0.00187500",
           "unknown_cost_requests": 0,
           "complete": true,
           "status": "estimated",
@@ -2389,25 +2926,45 @@
             "estimated": 30
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": "0.00075000",
+            "known_cost_subtotal_usd": "0.00075000",
+            "unknown_cost_requests": 0
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0.00112500",
+            "known_cost_subtotal_usd": "0.00112500",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": 3000,
           "output_tokens": 600,
           "thinking_tokens": 150,
-          "billed_output_tokens": 750
+          "billed_output_tokens": 750,
+          "cached_input_tokens": 0,
+          "tool_use_tokens": 0,
+          "total_tokens": 3750
         },
         "latency": {
-          "total_ms": 1.6945000011219236,
-          "average_per_request_ms": 0.05648333337073078,
-          "average_per_query_ms": 0.0385113636618619,
+          "total_ms": 2.8117000038037077,
+          "average_per_request_ms": 0.09372333346012358,
+          "average_per_query_ms": 0.06390227281372063,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
           "gemini-3.1-flash-lite": {
             "requests": 30,
             "cost": {
-              "estimated_cost_usd": "0.0018750",
+              "estimated_cost_usd": "0.00187500",
               "average_cost_per_query_usd": "0.00004261363636363636363636363636",
-              "known_cost_subtotal_usd": "0.0018750",
+              "known_cost_subtotal_usd": "0.00187500",
               "unknown_cost_requests": 0,
               "complete": true,
               "status": "estimated",
@@ -2415,16 +2972,36 @@
                 "estimated": 30
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": "0.00075000",
+                "known_cost_subtotal_usd": "0.00075000",
+                "unknown_cost_requests": 0
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0.00112500",
+                "known_cost_subtotal_usd": "0.00112500",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": 3000,
               "output_tokens": 600,
               "thinking_tokens": 150,
-              "billed_output_tokens": 750
+              "billed_output_tokens": 750,
+              "cached_input_tokens": 0,
+              "tool_use_tokens": 0,
+              "total_tokens": 3750
             },
             "latency": {
-              "total_ms": 1.6945000011219236,
-              "average_per_request_ms": 0.05648333337073078,
-              "average_per_query_ms": 0.0385113636618619,
+              "total_ms": 2.8117000038037077,
+              "average_per_request_ms": 0.09372333346012358,
+              "average_per_query_ms": 0.06390227281372063,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2443,16 +3020,36 @@
             "usage_unavailable": 42
           }
         },
+        "components": {
+          "input_cost_usd": {
+            "estimated_cost_usd": null,
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 42
+          },
+          "cached_input_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          },
+          "output_cost_usd": {
+            "estimated_cost_usd": "0",
+            "known_cost_subtotal_usd": "0",
+            "unknown_cost_requests": 0
+          }
+        },
         "usage": {
           "input_tokens": null,
           "output_tokens": null,
           "thinking_tokens": null,
-          "billed_output_tokens": null
+          "billed_output_tokens": null,
+          "cached_input_tokens": null,
+          "tool_use_tokens": null,
+          "total_tokens": null
         },
         "latency": {
-          "total_ms": 1.019899998937035,
-          "average_per_request_ms": 0.02428333330802464,
-          "average_per_query_ms": 0.02317954543038716,
+          "total_ms": 1.6096000181278214,
+          "average_per_request_ms": 0.038323809955424316,
+          "average_per_query_ms": 0.036581818593814125,
           "source": "measured local mock SDK call overhead; not provider latency"
         },
         "by_model": {
@@ -2469,16 +3066,36 @@
                 "usage_unavailable": 42
               }
             },
+            "components": {
+              "input_cost_usd": {
+                "estimated_cost_usd": null,
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 42
+              },
+              "cached_input_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              },
+              "output_cost_usd": {
+                "estimated_cost_usd": "0",
+                "known_cost_subtotal_usd": "0",
+                "unknown_cost_requests": 0
+              }
+            },
             "usage": {
               "input_tokens": null,
               "output_tokens": null,
               "thinking_tokens": null,
-              "billed_output_tokens": null
+              "billed_output_tokens": null,
+              "cached_input_tokens": null,
+              "tool_use_tokens": null,
+              "total_tokens": null
             },
             "latency": {
-              "total_ms": 1.019899998937035,
-              "average_per_request_ms": 0.02428333330802464,
-              "average_per_query_ms": 0.02317954543038716,
+              "total_ms": 1.6096000181278214,
+              "average_per_request_ms": 0.038323809955424316,
+              "average_per_query_ms": 0.036581818593814125,
               "source": "measured local mock SDK call overhead; not provider latency"
             }
           }
@@ -2794,8 +3411,8 @@
         "initial_role": "large",
         "routing_decision": {
           "selected_role": "large",
-          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is unavailable; estimated cost remains unknown. Cost optimality has not been evaluated.",
-          "pricing_status": "unavailable",
+          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
           "policy": "complexity-v1",
           "cost_optimized": false
         },
@@ -2844,8 +3461,8 @@
         "initial_role": "large",
         "routing_decision": {
           "selected_role": "large",
-          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is unavailable; estimated cost remains unknown. Cost optimality has not been evaluated.",
-          "pricing_status": "unavailable",
+          "reason": "Complexity label complex (score 3) maps to the large role under the configured policy. Pricing is configured; estimated cost depends on returned usage. Cost optimality has not been evaluated.",
+          "pricing_status": "configured",
           "policy": "complexity-v1",
           "cost_optimized": false
         },
@@ -2960,26 +3577,45 @@
       "cost": {
         "estimated_cost_usd": null,
         "average_cost_per_query_usd": null,
-        "known_cost_subtotal_usd": "0.0003125",
-        "unknown_cost_requests": 7,
+        "known_cost_subtotal_usd": "0.00132500",
+        "unknown_cost_requests": 1,
         "complete": false,
-        "status": "pricing_unavailable",
+        "status": "incomplete",
         "attempt_statuses": {
-          "estimated": 5,
-          "pricing_unavailable": 6,
+          "estimated": 11,
           "usage_unavailable": 1
+        }
+      },
+      "components": {
+        "input_cost_usd": {
+          "estimated_cost_usd": null,
+          "known_cost_subtotal_usd": "0.00057500",
+          "unknown_cost_requests": 1
+        },
+        "cached_input_cost_usd": {
+          "estimated_cost_usd": null,
+          "known_cost_subtotal_usd": "0",
+          "unknown_cost_requests": 1
+        },
+        "output_cost_usd": {
+          "estimated_cost_usd": null,
+          "known_cost_subtotal_usd": "0.00075000",
+          "unknown_cost_requests": 1
         }
       },
       "usage": {
         "input_tokens": null,
         "output_tokens": null,
         "thinking_tokens": null,
-        "billed_output_tokens": null
+        "billed_output_tokens": null,
+        "cached_input_tokens": null,
+        "tool_use_tokens": null,
+        "total_tokens": null
       },
       "latency": {
-        "total_ms": 0.4378999997243227,
-        "average_per_request_ms": 0.036491666643693556,
-        "average_per_query_ms": 0.05473749996554034,
+        "total_ms": 0.6365999797708355,
+        "average_per_request_ms": 0.05304999831423629,
+        "average_per_query_ms": 0.07957499747135444,
         "source": "measured local mock SDK call overhead; not provider latency"
       },
       "by_model": {
@@ -2988,7 +3624,7 @@
           "cost": {
             "estimated_cost_usd": null,
             "average_cost_per_query_usd": null,
-            "known_cost_subtotal_usd": "0.0003125",
+            "known_cost_subtotal_usd": "0.00031250",
             "unknown_cost_requests": 1,
             "complete": false,
             "status": "incomplete",
@@ -2997,42 +3633,82 @@
               "usage_unavailable": 1
             }
           },
+          "components": {
+            "input_cost_usd": {
+              "estimated_cost_usd": null,
+              "known_cost_subtotal_usd": "0.00012500",
+              "unknown_cost_requests": 1
+            },
+            "cached_input_cost_usd": {
+              "estimated_cost_usd": null,
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 1
+            },
+            "output_cost_usd": {
+              "estimated_cost_usd": null,
+              "known_cost_subtotal_usd": "0.00018750",
+              "unknown_cost_requests": 1
+            }
+          },
           "usage": {
             "input_tokens": null,
             "output_tokens": null,
             "thinking_tokens": null,
-            "billed_output_tokens": null
+            "billed_output_tokens": null,
+            "cached_input_tokens": null,
+            "tool_use_tokens": null,
+            "total_tokens": null
           },
           "latency": {
-            "total_ms": 0.2374999999119609,
-            "average_per_request_ms": 0.03958333331866015,
-            "average_per_query_ms": 0.029687499988995114,
+            "total_ms": 0.3383999865036458,
+            "average_per_request_ms": 0.05639999775060763,
+            "average_per_query_ms": 0.04229999831295572,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         },
         "gemini-3.8-flash": {
           "requests": 6,
           "cost": {
-            "estimated_cost_usd": null,
-            "average_cost_per_query_usd": null,
-            "known_cost_subtotal_usd": "0",
-            "unknown_cost_requests": 6,
-            "complete": false,
-            "status": "pricing_unavailable",
+            "estimated_cost_usd": "0.00101250",
+            "average_cost_per_query_usd": "0.0001265625",
+            "known_cost_subtotal_usd": "0.00101250",
+            "unknown_cost_requests": 0,
+            "complete": true,
+            "status": "estimated",
             "attempt_statuses": {
-              "pricing_unavailable": 6
+              "estimated": 6
+            }
+          },
+          "components": {
+            "input_cost_usd": {
+              "estimated_cost_usd": "0.00045000",
+              "known_cost_subtotal_usd": "0.00045000",
+              "unknown_cost_requests": 0
+            },
+            "cached_input_cost_usd": {
+              "estimated_cost_usd": "0",
+              "known_cost_subtotal_usd": "0",
+              "unknown_cost_requests": 0
+            },
+            "output_cost_usd": {
+              "estimated_cost_usd": "0.00056250",
+              "known_cost_subtotal_usd": "0.00056250",
+              "unknown_cost_requests": 0
             }
           },
           "usage": {
             "input_tokens": 600,
             "output_tokens": 120,
             "thinking_tokens": 30,
-            "billed_output_tokens": 150
+            "billed_output_tokens": 150,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "total_tokens": 750
           },
           "latency": {
-            "total_ms": 0.20039999981236178,
-            "average_per_request_ms": 0.033399999968726966,
-            "average_per_query_ms": 0.025049999976545223,
+            "total_ms": 0.2981999932671897,
+            "average_per_request_ms": 0.04969999887786495,
+            "average_per_query_ms": 0.037274999158398714,
             "source": "measured local mock SDK call overhead; not provider latency"
           }
         }
@@ -3060,12 +3736,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3078,6 +3758,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3089,12 +3772,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3105,6 +3792,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3122,12 +3812,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3140,6 +3834,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3151,12 +3848,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3166,12 +3867,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "escalation"
           },
           {
@@ -3182,6 +3887,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3199,12 +3907,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3217,6 +3929,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3228,12 +3943,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3243,12 +3962,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
         ]
@@ -3264,12 +3987,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3282,6 +4009,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3293,12 +4023,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3308,12 +4042,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
         ]
@@ -3329,12 +4067,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3347,6 +4089,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3364,12 +4109,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3382,6 +4131,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3393,12 +4145,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "initial"
           },
           {
@@ -3409,6 +4165,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3426,12 +4185,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3444,6 +4207,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3455,12 +4221,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "initial"
           }
         ]
@@ -3476,12 +4246,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3494,6 +4268,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3505,12 +4282,16 @@
             "input_tokens": null,
             "output_tokens": null,
             "thinking_tokens": null,
-            "billed_output_tokens": null,
             "total_tokens": null,
             "cached_input_tokens": null,
+            "tool_use_tokens": null,
+            "billed_output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": null,
+            "output_cost_usd": null,
             "phase": "initial"
           },
           {
@@ -3521,6 +4302,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3538,12 +4322,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3556,6 +4344,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3573,12 +4364,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3591,6 +4386,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3608,12 +4406,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3626,6 +4428,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3637,12 +4442,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3652,12 +4461,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
         ]
@@ -3673,12 +4486,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3691,6 +4508,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3702,12 +4522,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": "0.0000625",
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00006250",
             "cost_status": "estimated",
             "pricing_version": "standard-text-2026-11-03",
+            "input_cost_usd": "0.00002500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00003750",
             "phase": "initial"
           },
           {
@@ -3717,12 +4541,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "escalation"
           }
         ]
@@ -3738,12 +4566,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3756,6 +4588,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3773,12 +4608,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3791,6 +4630,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3808,12 +4650,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3826,6 +4672,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3837,12 +4686,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "initial"
           }
         ]
@@ -3858,12 +4711,16 @@
             "input_tokens": 100,
             "output_tokens": 20,
             "thinking_tokens": 5,
-            "billed_output_tokens": 25,
             "total_tokens": 125,
-            "cached_input_tokens": null,
-            "estimated_cost_usd": null,
-            "cost_status": "pricing_unavailable",
-            "pricing_version": null,
+            "cached_input_tokens": 0,
+            "tool_use_tokens": 0,
+            "billed_output_tokens": 25,
+            "estimated_cost_usd": "0.00016875",
+            "cost_status": "estimated",
+            "pricing_version": "standard-text-verified-2026-11-06",
+            "input_cost_usd": "0.00007500",
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0.00009375",
             "phase": "baseline"
           }
         ],
@@ -3876,6 +4733,9 @@
             "output_tokens": null,
             "estimated_cost_usd": null,
             "cost_status": "usage_unavailable",
+            "input_cost_usd": null,
+            "cached_input_cost_usd": "0",
+            "output_cost_usd": "0",
             "usage_source": null,
             "pricing_version": "standard-text-2026-11-03",
             "phase": "embedding"
@@ -3893,7 +4753,7 @@
     "Warm seed generation/storage metrics are separate from repeated lookup/fallback workload metrics.",
     "Misses generate but are not saved, preserving the same candidate set across threshold comparisons.",
     "Avoided generation includes unsafe false hits; safe reuse is reported separately. These component results are separate from the paired cost comparison.",
-    "Cost is estimated from the unchanged pricing file and synthetic usage; missing usage or prices make totals incomplete.",
+    "Cost is estimated from the recorded pricing snapshot and synthetic usage; missing usage or prices make totals incomplete.",
     "Average cost per query divides by all scenario queries, including cache hits. By-model averages use the same denominator.",
     "Threshold experiments and the routing experiment are separate workloads and must not be added as one production total.",
     "Fixture label agreement is a regression check, not independent classification accuracy or factual verification.",

@@ -42,6 +42,7 @@ def sdk_response(text="Paris.", *, usage=True):
             role="model", parts=[types.Part.from_text(text=text)],
         ))],
         usage_metadata=types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
             prompt_token_count=100, candidates_token_count=20,
             thoughts_token_count=5, total_token_count=125,
         ) if usage else None,
@@ -236,6 +237,7 @@ def test_unpriced_attempt_prevents_partial_cost(missing_model):
 def test_zero_usage_latency_and_cost_are_preserved():
     reply = sdk_response()
     reply.usage_metadata = types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
         prompt_token_count=0, candidates_token_count=0,
         thoughts_token_count=0, total_token_count=0,
     )

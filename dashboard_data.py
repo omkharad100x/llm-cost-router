@@ -8,7 +8,8 @@ import math
 from pathlib import Path
 import re
 
-from dashboard_metrics import benchmark_metrics
+from dashboard_metrics import benchmark_metrics, historical_metrics
+from money import COST_FIELDS, add, amount
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -174,7 +175,7 @@ def validate_runtime_record(record):
             raise ValueError("Missing usage field.")
     for field in (
         "input_tokens", "output_tokens", "thinking_tokens", "billed_output_tokens",
-        "total_tokens", "cached_input_tokens",
+        "total_tokens", "cached_input_tokens", "tool_use_tokens",
     ):
         value = record.get(field)
         if value is not None:
@@ -186,18 +187,25 @@ def validate_runtime_record(record):
         raise ValueError("Invalid latency.")
     if record["cost_status"] not in COST_STATUSES:
         raise ValueError("Unknown cost status.")
+    for field in COST_FIELDS:
+        value = record.get(field)
+        if value is not None and (not isinstance(value, str) or amount(value) < 0):
+            raise ValueError("Invalid component cost.")
     cost = record["estimated_cost_usd"]
     if cost is not None:
         if not isinstance(cost, str) or len(cost) > 64:
             raise ValueError("Invalid cost.")
         try:
-            amount = Decimal(cost)
-            if not amount.is_finite() or amount < 0:
+            value = amount(cost)
+            if value < 0:
                 raise ValueError("Invalid cost.")
         except InvalidOperation:
             raise ValueError("Invalid cost.") from None
     if (record["cost_status"] == "estimated") != (cost is not None):
         raise ValueError("Inconsistent cost availability.")
+    parts = [record.get(field) for field in COST_FIELDS]
+    if cost is not None and all(v is not None for v in parts) and add(parts) != amount(cost):
+        raise ValueError("Inconsistent cost breakdown.")
     return timestamp.astimezone(timezone.utc)
 
 
@@ -234,6 +242,7 @@ def load_runtime(directory=PROJECT_ROOT):
         count = 0
         latest = None
         roles = dict(small_model=0, large_model=0)
+        records = []
         for line in text.splitlines():
             if not line.strip():
                 continue
@@ -242,13 +251,18 @@ def load_runtime(directory=PROJECT_ROOT):
                 return _result("runtime", "too_large")
             record = _json(line)
             timestamp = validate_runtime_record(record)
+            fields = ("model", "request_kind", "status", "latency_ms", "input_tokens", "output_tokens",
+                      "thinking_tokens", "billed_output_tokens", "cached_input_tokens", "tool_use_tokens",
+                      "total_tokens", "estimated_cost_usd", "cost_status", *COST_FIELDS)
+            records.append({**{field: record.get(field) for field in fields},
+                            "timestamp_utc": timestamp.isoformat()})
             if record['request_kind'] in roles:
                 roles[record['request_kind']] += 1
             latest = timestamp if latest is None else max(latest, timestamp)
         if not count:
-            return _result("runtime", "empty")
+            return _result("runtime", "empty", analytics={"records": [], "costs": historical_metrics([])})
         metadata = RuntimeMetadata(count, latest.isoformat(), roles["small_model"], roles["large_model"])
-        return _result("runtime", "ready", metadata)
+        return _result("runtime", "ready", metadata, {"records": records, "costs": historical_metrics(records)})
     except _SourceIssue as error:
         return _result("runtime", error.status)
     except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError):

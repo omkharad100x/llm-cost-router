@@ -168,7 +168,7 @@ def test_analytics_threshold_selection_and_separate_historical_panel(app, tmp_pa
     for role in ("Small", "Large"):
         assert f'<h3>{role} model</h3><div class="lcr-value lcr-ready">0</div>' in html(app)
 
-def test_cost_comparison_navigation_and_missing_large_model_price(app, tmp_path):
+def test_cost_comparison_navigation_and_missing_usage(app, tmp_path):
     from benchmarks import run_benchmarks
     report = run_benchmarks()
     (tmp_path / "benchmark_report.json").write_text(json.dumps(report), encoding="utf-8")
@@ -179,10 +179,43 @@ def test_cost_comparison_navigation_and_missing_large_model_price(app, tmp_path)
     assert not app.exception
     output = html(app)
     assert "Baseline cost" in output and "Optimized known subtotal" in output
-    assert "Unavailable" in output and "0.00037500" in output
-    assert any("Pricing unavailable for gemini-3.8-flash" in item.value for item in app.info)
+    assert "Unavailable" in output and "0.001725" in output
+    assert any("Token usage unavailable for gemini-embedding-001" in item.value for item in app.info)
     assert len(app.table) == 1
     report.pop("cost_comparison")
     (tmp_path / "benchmark_report.json").write_text(json.dumps(report), encoding="utf-8")
     app.button[0].click().run()
     assert not app.exception and any("no paired cost workload" in item.value for item in app.info)
+
+
+def test_historical_cost_cards_share_exact_accounting(app, tmp_path):
+    from types import SimpleNamespace
+    from instrumentation import usage_metrics
+    from dashboard_metrics import historical_metrics
+
+    usage = SimpleNamespace(prompt_token_count=1000, candidates_token_count=100,
+                            thoughts_token_count=50, total_token_count=1150,
+                            cached_content_token_count=500, tool_use_prompt_token_count=0)
+    row = dict(timestamp_utc="2026-11-06T00:00:00+00:00", model="gemini-offline-fixture",
+               request_kind="small_model", status="success", latency_ms=1,
+               **usage_metrics(SimpleNamespace(usage_metadata=usage),
+                               {"input_usd_per_million":"0.25", "output_usd_per_million":"1.50",
+                                "cached_input_usd_per_million":"0.025"}))
+    (tmp_path / "request_metrics.jsonl").write_text(json.dumps(row), encoding="utf-8")
+    app.radio[0].set_value("Cost Analysis").run()
+    assert not app.exception
+    expected = historical_metrics([row])
+    output = html(app)
+    assert expected["display"]["estimated_cost_usd"] in output
+    for component in expected["components"].values():
+        assert component["display"]["estimated_cost_usd"] in output
+    assert "Historical · API requests" in output
+    assert len(app.table) == 1
+    row["estimated_cost_usd"] = None
+    row["cost_status"] = "usage_unavailable"
+    for name in ("input_cost_usd", "cached_input_cost_usd", "output_cost_usd"):
+        row[name] = None
+    (tmp_path / "request_metrics.jsonl").write_text(json.dumps(row), encoding="utf-8")
+    app.button[0].click().run()
+    assert not app.exception
+    assert "Unavailable" in html(app) and "1 requests with unknown cost" in html(app)

@@ -40,7 +40,7 @@ def call(role, phase, *, priced=True, usage=True):
             statistics=SimpleNamespace(token_count=10) if usage else None)])
         metrics = embedding_usage_metrics(response, rates)
     else:
-        response = SimpleNamespace(usage_metadata=SimpleNamespace(prompt_token_count=100,
+        response = SimpleNamespace(usage_metadata=SimpleNamespace(prompt_token_count=100, cached_content_token_count=0, tool_use_prompt_token_count=0,
             candidates_token_count=20, thoughts_token_count=5, total_token_count=125) if usage else None)
         metrics = usage_metrics(response, rates)
     return dict(model=MODELS[role], request_kind="embedding" if role=="embedding" else role+"_model",
@@ -128,6 +128,8 @@ def test_zero_price_is_distinct_from_unavailable(ledger):
     for query in ledger["queries"]:
         for record in query["baseline"] + query["optimized"]:
             record["estimated_cost_usd"] = "0"
+            for field in ("input_cost_usd", "cached_input_cost_usd", "output_cost_usd"):
+                record.pop(field, None)
     result = comparison_metrics(ledger)
     assert result["savings_usd"] == "0"
     assert result["savings_percentage"] is None
@@ -137,6 +139,8 @@ def test_zero_price_is_distinct_from_unavailable(ledger):
 def test_decimal_precision_retained_through_json(ledger):
     for query in ledger["queries"]:
         query["baseline"][0]["estimated_cost_usd"] = "0.100000000000000000000000001"
+        for field in ("input_cost_usd", "cached_input_cost_usd", "output_cost_usd"):
+            query["baseline"][0].pop(field, None)
     result = comparison_metrics(json.loads(json.dumps(ledger)))
     assert result["baseline"]["estimated_cost_usd"] == "0.300000000000000000000000003"
     assert Decimal(result["savings_usd"]) == Decimal("0.299719000000000000000000003")

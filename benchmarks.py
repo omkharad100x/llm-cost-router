@@ -92,7 +92,8 @@ def _text(value):
 
 def _usage(value):
     if value is not None and (
-        not isinstance(value, dict) or set(value) != USAGE_FIELDS
+        not isinstance(value, dict) or not USAGE_FIELDS.issubset(value)
+        or set(value) - USAGE_FIELDS - {"cached_content_token_count", "tool_use_prompt_token_count"}
         or any(item is not None and (type(item) is not int or item < 0) for item in value.values())
     ):
         raise ValueError("Usage fixtures require explicit nonnegative token counts or null.")
@@ -463,7 +464,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
         "implementation_sha256": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in (
-                "benchmarks.py", "benchmark_accounting.py", "cost_comparison.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
+                "benchmarks.py", "money.py", "benchmark_accounting.py", "cost_comparison.py", "semantic_cache.py", "cache_schema.py", "cache_config.py",
                 "semantic_similarity.py", "embeddings.py", "evaluate_similarity.py",
                 "model_router.py", "gemini_models.py", "model_config.py", "instrumentation.py",
                 "query_complexity.py", "complexity_config.py", "answer_evaluator.py",
@@ -492,7 +493,7 @@ def run_benchmarks(*, config=BenchmarkConfig(), dataset=DEFAULT_DATASET,
             "Warm seed generation/storage metrics are separate from repeated lookup/fallback workload metrics.",
             "Misses generate but are not saved, preserving the same candidate set across threshold comparisons.",
             "Avoided generation includes unsafe false hits; safe reuse is reported separately. These component results are separate from the paired cost comparison.",
-            "Cost is estimated from the unchanged pricing file and synthetic usage; missing usage or prices make totals incomplete.",
+            "Cost is estimated from the recorded pricing snapshot and synthetic usage; missing usage or prices make totals incomplete.",
             "Average cost per query divides by all scenario queries, including cache hits. By-model averages use the same denominator.",
             "Threshold experiments and the routing experiment are separate workloads and must not be added as one production total.",
             "Fixture label agreement is a regression check, not independent classification accuracy or factual verification.",

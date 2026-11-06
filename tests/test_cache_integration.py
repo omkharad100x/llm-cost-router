@@ -74,6 +74,7 @@ def test_answer_once_then_semantic_hit_after_reopening(tmp_path, embedding_token
                 finish_reason="STOP",
             )],
             usage_metadata=types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
                 prompt_token_count=100, candidates_token_count=20,
                 thoughts_token_count=0, total_token_count=120,
             ),

@@ -1,6 +1,10 @@
 """Numeric projections from a validated version-1 offline benchmark envelope."""
 
 import math
+from datetime import date
+
+from benchmark_accounting import summarize_requests
+from money import amount, multiply, cost_display
 
 from cost_comparison import project_comparison
 
@@ -128,3 +132,42 @@ def benchmark_metrics(report):
                 escalationRate=_rate(escalations, queries), acceptanceRate=_rate(accepted, queries),
                 successRate=_rate(successes, escalations),
                 passed=_count(_group(pipeline, "quality_metrics"), "final_passes", queries))
+
+
+def historical_metrics(records, *, start=None, end=None, model=None, currency="USD", rate="1"):
+    """Aggregate recorded costs with Decimal; optional filters use UTC calendar days."""
+    if currency not in ("USD", "EUR", "INR", "GBP") or amount(rate) <= 0:
+        raise ValueError("Invalid currency configuration.")
+    if start:
+        date.fromisoformat(start)
+    if end:
+        date.fromisoformat(end)
+    if start and end and start > end:
+        raise ValueError("Invalid date range.")
+    selected = [r for r in records
+                if (not start or r["timestamp_utc"][:10] >= start)
+                and (not end or r["timestamp_utc"][:10] <= end)
+                and (not model or model == "All models" or r["model"] == model)]
+    count = len(selected)
+
+    def summarize(rows):
+        result = summarize_requests(rows, query_count=count)
+        costs = {**result["cost"], "display": cost_display(result["cost"], currency, rate),
+                 "requests": result["requests"], "components": result["components"],
+                 "generation_calls": sum(row["request_kind"] != "embedding" for row in rows)}
+        for component in costs["components"].values():
+            component["display"] = cost_display(component, currency, rate)
+        return costs
+
+    summary = summarize(selected)
+    summary["by_model"] = [
+        {"model": name, **summarize([r for r in selected if r["model"] == name])}
+        for name in sorted({r["model"] for r in selected})]
+    summary["embedding"] = summarize([r for r in selected if r["request_kind"] == "embedding"])
+    summary["daily"] = []
+    for day in sorted({r["timestamp_utc"][:10] for r in selected}):
+        daily = summarize([r for r in selected if r["timestamp_utc"][:10] == day])
+        cost = daily["estimated_cost_usd"]
+        summary["daily"].append({"date": day, "cost": None if cost is None else str(multiply(cost, rate)),
+                                 "display": daily["display"]["estimated_cost_usd"]})
+    return summary

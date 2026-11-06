@@ -1,6 +1,6 @@
 """Validate offline comparison ledgers and project Decimal costs for both UIs."""
 
-from decimal import Decimal
+from money import COST_FIELDS, add, amount, divide, multiply, cost_display, display
 import math
 import re
 
@@ -9,7 +9,8 @@ from benchmark_accounting import summarize_requests
 
 UNKNOWN_COST = {"pricing_unavailable", "usage_unavailable", "usage_inconsistent",
                 "cached_pricing_unavailable", "metrics_unavailable"}
-TOKEN_FIELDS = ("input_tokens", "output_tokens", "thinking_tokens", "billed_output_tokens")
+TOKEN_FIELDS = ("input_tokens", "output_tokens", "thinking_tokens", "billed_output_tokens",
+                "cached_input_tokens", "tool_use_tokens", "total_tokens")
 
 
 def _record(record, models):
@@ -35,19 +36,22 @@ def _record(record, models):
     else:
         if not isinstance(cost, str) or len(cost) > 64:
             raise ValueError("Costs must be decimal strings.")
-        amount = Decimal(cost)
-        if not amount.is_finite() or amount < 0 or abs(amount.adjusted()) > 100 or status != "estimated":
+        value = amount(cost)
+        if value < 0 or status != "estimated":
             raise ValueError("Invalid cost estimate.")
         if record.get("input_tokens") is None or (role != "embedding" and record.get("billed_output_tokens") is None):
             raise ValueError("Estimated costs require measured usage.")
     # Whitelist fields; arbitrary report text never reaches the dashboard.
     return dict(model=record["model"], phase=phase, estimated_cost_usd=cost, cost_status=status,
-                **{k: record.get(k) for k in TOKEN_FIELDS})
+                **{k: record.get(k) for k in (*TOKEN_FIELDS, *COST_FIELDS)})
 
 
 def _summary(records, count):
     summary = summarize_requests(records, query_count=count)
-    return {**summary["cost"], "requests": len(records),
+    for component in summary["components"].values():
+        component["display"] = cost_display(component)
+    return {**summary["cost"], "display": cost_display(summary["cost"]),
+            "components": summary["components"], "requests": len(records),
             "generation_calls": sum(r["phase"] != "embedding" for r in records)}
 
 
@@ -99,16 +103,17 @@ def comparison_metrics(payload):
     comparable = base["complete"] and opt["complete"] and not outcomes["false_hit"] and not outcomes["unreviewed_hit"]
     savings = percentage = None
     if comparable:
-        baseline_cost = Decimal(base["estimated_cost_usd"])
-        savings = baseline_cost - Decimal(opt["estimated_cost_usd"])
+        baseline_cost = amount(base["estimated_cost_usd"])
+        savings = add([baseline_cost, amount(opt["estimated_cost_usd"]).copy_negate()])
         if baseline_cost:
-            percentage = savings * 100 / baseline_cost
+            percentage = divide(multiply(savings, 100), baseline_cost)
     issues = []
     for model in sorted(set(r["model"] for r in baseline + optimized)):
         records = [r for r in baseline + optimized if r["model"] == model]
         if any(r["cost_status"] in ("pricing_unavailable", "cached_pricing_unavailable") for r in records):
             issues.append("Pricing unavailable for " + model + ".")
-        if any(r["input_tokens"] is None or (r["phase"] != "embedding" and r["billed_output_tokens"] is None) for r in records):
+        if any(r["cost_status"] == "usage_unavailable" or r["input_tokens"] is None
+               or (r["phase"] != "embedding" and r["billed_output_tokens"] is None) for r in records):
             issues.append("Token usage unavailable for " + model + ".")
         if any(r["cost_status"] in ("metrics_unavailable", "usage_inconsistent") for r in records):
             issues.append("Incomplete request accounting for " + model + ".")
@@ -116,6 +121,8 @@ def comparison_metrics(payload):
         issues.append("Savings withheld because the workload contains unsafe or unreviewed cache reuse.")
     return dict(status="ready", query_count=count, threshold=threshold, baseline=base, optimized=opt,
                 savings_usd=str(savings) if savings is not None else None,
+                savings_display=display(savings) if savings is not None else None,
+                savings_percentage_display=f"{percentage:.2f}%" if percentage is not None else None,
                 savings_percentage=str(percentage) if percentage is not None else None,
                 safe_calls_avoided=outcomes["safe_hit"], cache_outcomes=outcomes, issues=issues,
                 escalation=_summary([r for r in optimized if r["phase"] == "escalation"], count),

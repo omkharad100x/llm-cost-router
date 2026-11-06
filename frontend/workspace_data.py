@@ -1,47 +1,43 @@
-"""Read-only projection for the local dashboard. Never return prompts or raw records."""
+"""Read-only dashboard projection. Monetary aggregation happens in Python."""
+
 import json
-import math
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import dashboard_data as ds
+from dashboard_metrics import historical_metrics
 from cache_config import DEFAULT_CONFIG
 from cache_schema import SCHEMA_VERSION
 from evaluation_config import EvaluationConfig
 from model_config import load_model_config
 
 
-def historical():
-    rows = []
-    for line in ds._read_source(ds.PROJECT_ROOT, "runtime").splitlines():
-        if not line.strip():
-            continue
-        if len(rows) >= ds.MAX_RUNTIME_RECORDS:
-            raise ValueError()
-        r = ds._json(line)
-        stamp = ds.validate_runtime_record(r)
-        cost = r["estimated_cost_usd"]
-        if cost is not None and not math.isfinite(float(cost)):
-            raise ValueError()
-        rows.append(dict(time=stamp.isoformat(), model=r["model"], kind=r["request_kind"],
-                         status=r["status"], ms=r["latency_ms"], cost=float(cost) if cost is not None else None,
-                         input=r["input_tokens"], output=r["output_tokens"]))
-    return rows
+def workspace(options=None):
+    options = options or {}
+    runtime = ds.load_runtime(ds.PROJECT_ROOT)
+    report = ds.load_benchmark(ds.PROJECT_ROOT)
+    history = costs = None
+    if runtime.analytics is not None:
+        records = runtime.analytics["records"]
+        history = [dict(time=r["timestamp_utc"], model=r["model"], kind=r["request_kind"],
+                        status=r["status"], ms=r["latency_ms"], cost=r["estimated_cost_usd"],
+                        input=r["input_tokens"], output=r["output_tokens"]) for r in records]
+        try:
+            costs = historical_metrics(records, start=options.get("from"), end=options.get("to"),
+                                       model=options.get("model"), currency=options.get("currency", "USD"),
+                                       rate=options.get("rate", "1"))
+        except (ValueError, TypeError, ArithmeticError):
+            costs = None
+    models = load_model_config()
+    return dict(history=history, costs=costs,
+                hs="Ready" if runtime.status in ("ready", "empty") else runtime.status.capitalize(),
+                bench=report.analytics, bs=report.status.capitalize(),
+                small=models.small_model, large=models.large_model, schema=SCHEMA_VERSION,
+                version=DEFAULT_CONFIG.cache_version, threshold=DEFAULT_CONFIG.similarity_threshold,
+                evaluation=EvaluationConfig().acceptance_threshold)
 
 
-def read(fn):
-    try:
-        return fn(), "Ready"
-    except ds._SourceIssue as e:
-        return None, e.status.capitalize()
-    except (ValueError, TypeError, KeyError, AttributeError, OverflowError, RecursionError):
-        return None, "Invalid"
-
-
-history, hs = read(historical)
-report = ds.load_benchmark()
-bench, bs = report.analytics, report.status.capitalize()
-models = load_model_config()
-print(json.dumps(dict(history=history, hs=hs, bench=bench, bs=bs, small=models.small_model,
-                      large=models.large_model, schema=SCHEMA_VERSION, version=DEFAULT_CONFIG.cache_version,
-                      threshold=DEFAULT_CONFIG.similarity_threshold, evaluation=EvaluationConfig().acceptance_threshold)))
+if __name__ == "__main__":
+    options = json.loads(sys.argv[1]) if len(sys.argv) == 2 else {}
+    print(json.dumps(workspace(options), allow_nan=False))

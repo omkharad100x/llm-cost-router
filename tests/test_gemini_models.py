@@ -25,6 +25,7 @@ def response(text="Synthetic answer", usage=True):
             role="model", parts=[types.Part.from_text(text=text)],
         ))],
         usage_metadata=types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
             prompt_token_count=100, candidates_token_count=20,
             thoughts_token_count=5, total_token_count=125,
         ) if usage else None,
@@ -118,6 +119,7 @@ def test_missing_usage_is_unavailable_not_zero(role):
 def test_zero_usage_preserved():
     sdk_response = response()
     sdk_response.usage_metadata = types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
         prompt_token_count=0, candidates_token_count=0, thoughts_token_count=0, total_token_count=0,
     )
     layer, _, _ = setup_layer(sdk_response)

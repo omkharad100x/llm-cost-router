@@ -48,6 +48,7 @@ def run_cli(inputs, client):
 def test_cli_commands_history_and_memory_summary(capsys):
     client = Mock()
     usage = types.GenerateContentResponseUsageMetadata(
+            cached_content_token_count=0, tool_use_prompt_token_count=0,
         prompt_token_count=10, candidates_token_count=2, total_token_count=12
     )
     client.models.generate_content.return_value = SimpleNamespace(

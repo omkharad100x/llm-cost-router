@@ -1,7 +1,7 @@
 """Streamlit presentation only; analytics and model calls remain separate."""
 
 from datetime import datetime, timezone
-from decimal import Decimal
+from money import display
 from html import escape
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -246,7 +246,7 @@ def _routing_analytics(source, runtime):
 
 
 def _usd(value):
-    return None if value is None else f"$\u2009{Decimal(value):,.8f}"
+    return display(value)
 
 
 def _cost_analysis(source, runtime):
@@ -264,8 +264,7 @@ def _cost_analysis(source, runtime):
             ("Baseline cost", _usd(base["estimated_cost_usd"]), "One large-model generation per query"),
             ("Optimized cost", _usd(optimized["estimated_cost_usd"]), "All generation and embedding attempts"),
             ("Estimated savings", _usd(comparison["savings_usd"]), "Withheld for incomplete costs or unsafe reuse"),
-            ("Savings percentage", None if comparison["savings_percentage"] is None else
-             f"{Decimal(comparison['savings_percentage']):.2f}%", "Savings / baseline cost"),
+            ("Savings percentage", comparison["savings_percentage_display"], "Savings / baseline cost"),
             ("Baseline cost per query", _usd(base["average_cost_per_query_usd"]), "All paired queries"),
             ("Optimized cost per query", _usd(optimized["average_cost_per_query_usd"]), "Includes cache hits"),
         ])
@@ -295,6 +294,11 @@ def _cost_analysis(source, runtime):
             ("Embedding expenditure", _usd(comparison["embedding"]["estimated_cost_usd"]),
              "Includes lookup and cache storage; known subtotal " + _usd(comparison["embedding"]["known_cost_subtotal_usd"])),
         ])
+        _metric_cards([(label, part["display"]["estimated_cost_usd"],
+                        "Known subtotal " + part["display"]["known_cost_subtotal_usd"])
+                       for label, part in zip(("Input token cost", "Cached input cost", "Output token cost"),
+                                              optimized["components"].values())])
+        st.caption("Input includes embeddings. Cached input has its own rate. Output includes thinking tokens.")
         st.subheader("Cost by model")
         st.table([{"Model": row["model"], "Scenario": name.title(),
                    "Estimated USD": _usd(row[name]["estimated_cost_usd"]) or "Unavailable",
@@ -309,6 +313,27 @@ def _cost_analysis(source, runtime):
             st.write("Saved attempts use the pricing snapshot from the benchmark run. Missing rates or "
                      "usage withhold totals. False or unreviewed cache hits withhold savings even when costs "
                      "are complete. Synthetic vectors and responses do not establish production quality or savings.")
+    st.subheader("Historical expenditure")
+    history = (runtime.analytics or {}).get("costs")
+    if history is None:
+        st.info(runtime.message)
+    else:
+        _metric_cards([
+            ("Total API expenditure", history["display"]["estimated_cost_usd"], "Historical · recorded costs"),
+            ("Average cost per request", history["display"]["average_cost_per_query_usd"], "Historical · API requests"),
+            ("Known cost subtotal", history["display"]["known_cost_subtotal_usd"],
+             f'{history["unknown_cost_requests"]} requests with unknown cost'),
+            ("Embedding expenditure", history["embedding"]["display"]["estimated_cost_usd"], "Historical · embedding requests"),
+        ])
+        _metric_cards([(label, history["components"][field]["display"]["estimated_cost_usd"],
+                        "Historical · unavailable for older records without breakdowns")
+                       for label, field in (("Input token cost", "input_cost_usd"),
+                                            ("Cached input cost", "cached_input_cost_usd"),
+                                            ("Output token cost", "output_cost_usd"))])
+        if history["by_model"]:
+            st.table([{"Model": row["model"], "Estimated cost": row["display"]["estimated_cost_usd"] or "Unavailable",
+                       "Known subtotal": row["display"]["known_cost_subtotal_usd"]}
+                      for row in history["by_model"]], hide_index=True)
     st.subheader("Historical and live comparison")
     st.caption("Historical source · " + STATUS_TEXT[runtime.status])
     _note("Historical request logs lack a paired large-model baseline and linked cache decisions. "

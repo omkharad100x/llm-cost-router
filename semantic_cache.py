@@ -73,6 +73,7 @@ class CacheLookup:
     similarity_score: float | None = None
     entry_id: str | None = None
     reason: str = "miss"
+    skipped_corrupt_entries: int = 0
 
 
 class CacheError(RuntimeError):
@@ -220,6 +221,8 @@ class SemanticCache:
         """Search approved entries; a threshold override affects only this lookup.
 
         Invalid thresholds raise ValueError before eligibility checks or API calls.
+        skipped_corrupt_entries reports malformed eligible candidates without
+        exposing their content. Storage failures still raise CacheError.
         """
         effective_threshold = validate_threshold(
             self.threshold if threshold is _UNSET else threshold
@@ -240,14 +243,17 @@ class SemanticCache:
             raise CacheError("Cache lookup failed.") from None
 
         candidates, entries = {}, {}
+        skipped_corrupt_entries = 0
         for row in rows:
             stored_vector = self._decode(row, now)
             if stored_vector is not None:
                 candidates[row["original_query"]] = stored_vector
                 entries[row["original_query"]] = row
+            else:
+                skipped_corrupt_entries += 1
         match = find_most_similar(vector, candidates, threshold=effective_threshold)
         if match is None:
-            return CacheLookup(hit=False)
+            return CacheLookup(hit=False, skipped_corrupt_entries=skipped_corrupt_entries)
         row = entries[match.query]
         # Re-read after similarity search: another connection may have invalidated
         # or replaced this entry after the initial candidate snapshot.
@@ -259,13 +265,14 @@ class SemanticCache:
         except sqlite3.Error:
             raise CacheError("Cache lookup failed.") from None
         if current is None or current != row:
-            return CacheLookup(hit=False, reason="invalidated")
+            return CacheLookup(hit=False, reason="invalidated", skipped_corrupt_entries=skipped_corrupt_entries)
         # Do not return an entry that expired during a long local scan.
         if row["expires_at"] <= self._now():
-            return CacheLookup(hit=False, reason="expired")
+            return CacheLookup(hit=False, reason="expired", skipped_corrupt_entries=skipped_corrupt_entries)
         return CacheLookup(
             hit=True, response=row["cached_response"], matched_query=match.query,
             similarity_score=match.score, entry_id=row["id"], reason="hit",
+            skipped_corrupt_entries=skipped_corrupt_entries,
         )
 
     def _existing(self, query_key, now):

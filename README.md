@@ -1131,3 +1131,75 @@ pass rates do not establish factual correctness. Historical request latency
 remains separate and has no paired quality or baseline evidence. Generate a
 fresh report with `python -B benchmarks.py --output NEW_REPORT.json` and review
 it before using it as the dashboard source.
+
+
+## Cache isolation and failure verification (Day 3, Task 6)
+
+The cache is a trusted local component. Namespace, cache version, embedding
+model/version, task, dimensions, dtype, preprocessing, normalization and eligibility
+metadata scope retrieval. Identical vectors in separate namespaces do not cross
+that boundary. Query keys preserve text except for surrounding whitespace; they
+are not lossy hashes. Conflicting active answers raise CacheConflictError rather
+than overwriting a winner.
+
+**Namespaces are not user or tenant authentication.** There is no separate
+application-ID or user-ID field. Distinct applications must supply distinct trusted
+namespaces or separate database files. Clients using the same namespace share
+entries. The explicit namespace selector on invalidate is an administrative
+capability and can target another namespace. Anyone with database-file access can
+read or alter its plaintext content. Caller-supplied eligibility and embedding
+configuration are trusted; high similarity alone does not prove answer equivalence.
+
+Each cache instance owns one SQLite connection and must stay on its creating
+thread. Concurrent workers need separate instances. Writes use short
+BEGIN IMMEDIATE transactions and recheck exact-query conflicts after acquiring
+the write lock. Embedding requests happen before that lock. Barrier-coordinated
+tests verify duplicate convergence, conflicting same-key writers, different-key
+and different-namespace writes, and parallel reads. SQLite serializes writers;
+this is not distributed locking or stampede prevention. Concurrent misses may
+still perform duplicate embeddings or, in an external integration, generations.
+
+Database locks, read/write/commit failures and unavailable files raise CacheError;
+they are not automatically converted into ordinary misses. Tests force locks
+without sleeps, verify transaction rollback and integrity, release the lock,
+retry, and reopen the file. Abandoned uncommitted writes remain invisible and
+roll back on connection close. Migration failures preserve original schema/data
+and allow a successful retry after the fault is removed. These controlled tests
+do not simulate power loss, arbitrary filesystem damage or production load.
+
+Lookup results now include skipped_corrupt_entries: the number of malformed
+candidate rows encountered in the eligible, unexpired scope. Those rows are
+never returned; a valid alternative may still be a hit. The count accompanies
+hits and misses without exposing row content. It is not a full database audit:
+incompatible or expired rows filtered out by SQL are not counted. Database-level
+corruption still raises an error. A reviewed save may replace an expired or
+corrupt exact entry as before.
+
+Embedding errors propagate and malformed vectors raise EmbeddingResponseError.
+The recorder captures SDK attempts and preserves unknown tokens/costs. Its
+success status means the SDK returned, not that downstream parsing or cache
+storage succeeded. Raw embedding provider exceptions should be sanitized by any
+future user-facing integration; this module does not print them.
+
+Routing errors stop generation without automatic fallback. A failed first
+generation prevents a second attempt, even if both providers would fail.
+Escalation allows at most one second model call after a generated small answer
+fails evaluation. A failed second call raises EscalationError while preserving
+the initial response in partial attempts. If both calls return valid text but
+both heuristic evaluations fail, the existing score-based selection remains.
+Recorder failures emit the existing generic warning and preserve provider
+behavior; durable failure telemetry cannot be guaranteed when recording fails.
+
+The CLI and standalone router still have no runtime cache fallback integration.
+Benchmarks and integration tests orchestrate these components separately and
+abort on serious cache errors. A future integration must explicitly record a
+cache bypass and decide which transient failures permit generation; it must not
+silently reinterpret corruption or invalid configuration as a safe miss.
+
+Run the offline checks from the repository root:
+
+    .\.venv\Scripts\python.exe -B -m pytest tests -q -p no:cacheprovider
+
+Task 6 adds isolation and fault-injection tests, not production reliability
+statistics. Dashboard failure counts remain unavailable without a measured
+source. Existing synthetic benchmark reports retain their original run snapshots.

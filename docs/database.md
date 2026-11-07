@@ -142,15 +142,15 @@ trusted scopes, not authenticated tenant boundaries.
 
 ## Dashboard and verification boundaries
 
-System Information shows SQLite, the selected mode, configuration validity and
+System Information shows the configured backend and mode, configuration validity and
 Not probed. Refresh does not connect to the database. An explicit verification
 command is a separate observation and is not presented as ongoing dashboard health.
 No database path, credentials or connection details are displayed.
 
-The dashboards still read JSONL and saved benchmark reports from their existing
-locations. A cache volume alone does not make those files persistent; deployment
-must separately preserve them if needed. No application was deployed and no
-production database is claimed operational.
+The local dashboards read available JSONL history and saved benchmark reports.
+The public Vercel dashboard serves packaged synthetic benchmark metrics and omits
+local history. Its workspace API has returned production JSON. Hosted database
+connectivity, Supabase migrations and production grants remain unverified.
 
 Offline tests cover settings, initialization refusal, path encoding, connection
 cleanup, timeout/lock recovery, read-only probes, incompatible schemas, migration
@@ -217,7 +217,7 @@ work. Effective production role privileges and exposure of the private schema
 also require a later authorized review. Offline catalog tests do not verify
 Supabase grants, pooler behavior or PostgreSQL execution of the migration.
 
-### Review steps before Task 8B
+### Outstanding database verification steps
 
 1. Install pinned dependencies in the project venv and run the offline suite:
 

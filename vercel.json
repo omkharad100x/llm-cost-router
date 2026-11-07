@@ -1,0 +1,11 @@
+{
+  "framework": null,
+  "buildCommand": "npm --prefix frontend ci && npm --prefix frontend run build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/workspace.py": {
+      "includeFiles": "benchmark_report.json",
+      "excludeFiles": "{**/.env*,**/*.jsonl,**/memory.txt,**/*.sqlite*,**/*.db*,**/*.pem,**/*.key,.streamlit/**,.venv/**,**/__pycache__/**,frontend/node_modules/**,frontend/dist/**,frontend/src/**,tests/**,evaluation/**,migrations/**}"
+    }
+  }
+}

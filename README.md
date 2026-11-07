@@ -53,7 +53,7 @@ The cache creates no answer: a caller must decide whether to use a hit or genera
 
 ## Technology
 
-Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit powers the local, read-only dashboard. SQLite comes with Python. No PostgreSQL integration is implemented.
+Python 3.14.5 is the version verified in the local virtual environment. The pinned runtime dependencies are `google-genai==2.29.0`, `python-dotenv==1.2.4`, `numpy==2.5.4`, and `streamlit==1.66.1`; `pytest==9.2.0` is pinned in `requirements-dev.txt`. Streamlit powers the local, read-only dashboard. SQLite comes with Python. The optional PostgreSQL backend uses Psycopg 3.3.6.
 
 ## Repository layout
 
@@ -1106,7 +1106,7 @@ internal test event loop. Browser verification covers desktop and phone layouts.
 
 ## Status and next steps
 
-The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional performance analytics, PostgreSQL, and public deployment are future work.
+The CLI, instrumentation, embeddings, similarity search, standalone cache, query complexity classifier, shared Gemini model layer, complexity-first router, independent answer evaluator, standalone escalation pipeline, offline component benchmarks, and the Streamlit dashboard foundation are implemented and covered by offline tests. The mocked integration test demonstrates one generated answer followed by a semantic hit after reopening SQLite. Production cache orchestration, automatic eligibility policy, measured price/quality optimization, additional performance analytics and public deployment are future work.
 
 Next priorities are to define a trustworthy cache eligibility workflow, connect cache lookup and reviewed storage to an application pipeline, avoid embedding the original query twice on a miss followed by save, and measure hit quality and cost savings. The current cache scans eligible vectors in linear time, keeps plaintext local data, and has no vector index or size based eviction. Schema migration currently supports only the original version 1 schema to version 2. The CLI's JSONL recorder is intended for local single process use.
 
@@ -1220,3 +1220,37 @@ environment variables, Windows/Linux paths, safe setup commands, connection
 lifecycle, PostgreSQL tradeoffs, backups and deployment requirements. System
 Information displays configuration validity separately from its **Not probed**
 connection status. Existing direct SQLite callers and offline tests keep working.
+
+## PostgreSQL cache adapter (Task 8A)
+
+SQLite is the local default. For the Supabase Free transaction-pooler target, see the [PostgreSQL configuration, migration and review steps](docs/database.md#postgresql-adapter-task-8a). The adapter has offline contract tests and an opt-in disposable local PostgreSQL test. Supabase connectivity and deployment require separate verification.
+
+
+## Task 8B workspace API
+
+The React client requests `GET /api/workspace` on the same origin. Vite serves
+that path during local development and preview. The Vercel Python function at
+`api/workspace.py` calls the same workspace projection directly. It uses the
+Python standard library and the packaged synthetic benchmark report.
+
+The hosted endpoint accepts GET and HEAD. Supported filter names are `from`,
+`to`, `model`, `currency` and `rate`. Filters apply to historical records in the
+local dashboard. The public function omits local history and returns null
+historical costs. Synthetic benchmark totals always cover the saved workload.
+Missing or invalid reports have an explicit source status. Database status is
+configuration-only and displays **Not probed**. No Gemini key or database DSN
+is required to serve the dashboard.
+
+Responses use JSON and `Cache-Control: no-store`. Malformed filter requests
+return 400, unsupported methods return 405 and unexpected projection failures
+return a generic 503. Raw reports, cache records, private request logs and
+exception details are excluded from public responses.
+
+For a later, separately authorized Vercel Hobby setup, select the **repository
+root** as the project root. The checked-in `vercel.json` builds the React project
+in `frontend` and publishes `frontend/dist` alongside the Python route. The
+root Python manifest declares no dashboard dependencies. The local assistant and
+test environment continue to use `requirements.txt` and `requirements-dev.txt`.
+Use the upload allowlist and keep secret values out of all `VITE_*` variables.
+Before publishing, confirm Hobby eligibility and the ₹0 account constraints.
+Task 8B does not require database provisioning, migrations or live model calls.

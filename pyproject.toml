@@ -1,0 +1,10 @@
+# Manifest for the Vercel workspace function. The local CLI and test environment
+# use requirements.txt and requirements-dev.txt.
+[project]
+name = "llm-router-workspace-api"
+version = "0.1.0"
+requires-python = ">=3.12,<3.15"
+dependencies = []
+
+[tool.uv]
+package = false

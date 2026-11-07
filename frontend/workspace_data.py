@@ -4,7 +4,8 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+if __name__ == "__main__":  # Vite invokes this file as a local CLI.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import dashboard_data as ds
 from database_config import database_summary
 from dashboard_metrics import historical_metrics
@@ -14,12 +15,12 @@ from evaluation_config import EvaluationConfig
 from model_config import load_model_config
 
 
-def workspace(options=None):
+def workspace(options=None, *, include_local_history=True):
     options = options or {}
-    runtime = ds.load_runtime(ds.PROJECT_ROOT)
+    runtime = ds.load_runtime(ds.PROJECT_ROOT) if include_local_history else None
     report = ds.load_benchmark(ds.PROJECT_ROOT)
     history = costs = None
-    if runtime.analytics is not None:
+    if runtime is not None and runtime.analytics is not None:
         records = runtime.analytics["records"]
         history = [dict(time=r["timestamp_utc"], model=r["model"], kind=r["request_kind"],
                         status=r["status"], ms=r["latency_ms"], cost=r["estimated_cost_usd"],
@@ -32,7 +33,8 @@ def workspace(options=None):
             costs = None
     models = load_model_config()
     return dict(history=history, costs=costs, database=database_summary(),
-                hs="Ready" if runtime.status in ("ready", "empty") else runtime.status.capitalize(),
+                hs=("Unavailable" if runtime is None else
+                    "Ready" if runtime.status in ("ready", "empty") else runtime.status.capitalize()),
                 bench=report.analytics, bs=report.status.capitalize(),
                 small=models.small_model, large=models.large_model, schema=SCHEMA_VERSION,
                 version=DEFAULT_CONFIG.cache_version, threshold=DEFAULT_CONFIG.similarity_threshold,

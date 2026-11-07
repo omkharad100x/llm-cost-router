@@ -2,3 +2,4 @@ google-genai==2.29.0
 python-dotenv==1.2.4
 numpy==2.5.4
 streamlit==1.66.1
+psycopg[binary]==3.3.6

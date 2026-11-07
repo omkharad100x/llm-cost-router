@@ -1,4 +1,4 @@
-"""Explicit local database initialization and read-only verification."""
+"""Explicit database initialization and read-only verification."""
 import argparse
 import json
 from database import DatabaseError, initialize_database, verify_database

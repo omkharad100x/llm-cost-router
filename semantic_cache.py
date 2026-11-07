@@ -117,14 +117,11 @@ def _validate_vector(value):
         raise ValueError("Expected a normalized, finite 768-dimensional vector.") from None
 
 
-class SemanticCache:
-    """One connection per instance/thread; use as a context manager or close it."""
+class CacheBehavior:
+    """Eligibility, semantic matching and cache operations shared by both stores."""
 
-    def __init__(
-        self, path, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
-        namespace="default", embedding_version="v1", cache_version=_UNSET, clock=time.time,
-        connection_timeout=5, require_existing=False, allow_initialize=True,
-    ):
+    def _configure(self, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
+                   namespace="default", embedding_version="v1", cache_version=_UNSET, clock=time.time):
         if not isinstance(config, CacheConfig):
             raise ValueError("config must be a CacheConfig instance.")
         threshold = validate_threshold(
@@ -135,54 +132,19 @@ class SemanticCache:
         cache_version = config.cache_version if cache_version is _UNSET else cache_version
         if not _nonempty(cache_version):
             raise ValueError("Cache version must be a nonempty string.")
-        if (type(connection_timeout) not in (int, float) or not math.isfinite(connection_timeout)
-                or not 0 <= connection_timeout <= 60):
-            raise ValueError("Connection timeout must be between 0 and 60 seconds.")
-        if type(require_existing) is not bool or type(allow_initialize) is not bool:
-            raise ValueError("Database opening policies must be boolean.")
         self.cache_version = cache_version
         self.threshold = threshold
         self.ttl_seconds = _positive_seconds(ttl_seconds)
-        self.namespace = namespace
         self.embedder = embedder
         self.clock = clock
         self._scope = (
             namespace, MODEL, embedding_version, TASK_TYPE, DIMENSIONS,
             VECTOR_DTYPE, ELIGIBILITY_VERSION, cache_version, EMBEDDING_CONFIG,
         )
-        self._connection = None
-        try:
-            target = Path(path).absolute().as_uri()+"?mode=rw" if require_existing else path
-            self._connection = sqlite3.connect(target, timeout=connection_timeout, uri=require_existing)
-            self._connection.row_factory = sqlite3.Row
-            with self._connection:
-                self._connection.execute("BEGIN IMMEDIATE")
-                version = self._connection.execute("PRAGMA user_version").fetchone()[0]
-                if version == 0:
-                    if not allow_initialize:
-                        raise CacheError("Explicit database initialization is required.")
-                    tables = self._connection.execute(
-                        "SELECT name FROM sqlite_master WHERE type = 'table' "
-                        "AND name NOT LIKE 'sqlite_%'"
-                    ).fetchall()
-                    if tables:
-                        raise CacheError("Refusing to initialize an unrelated database.")
-                    self._connection.execute(SCHEMA)
-                    create_expiration_index(self._connection)
-                    self._connection.execute("PRAGMA user_version = 2")
-                elif version == 1:
-                    migrate_v1(self._connection)
-                elif version != SCHEMA_VERSION:
-                    raise CacheError("Unsupported cache schema version.")
-                # Ensure an existing database has the expected table/columns.
-                self._connection.execute(
-                    "SELECT id, query_key, original_query, cached_response, response_model, "
-                    "embedding, created_at, expires_at FROM cache_entries WHERE " + SCOPE
-                    + " LIMIT 0", self._scope,
-                )
-        except (sqlite3.Error, CacheError, ValueError):
-            self.close()
-            raise CacheError("Cache database initialization failed.") from None
+
+    @property
+    def namespace(self):
+        return self._scope[0]
 
     def __enter__(self):
         return self
@@ -243,14 +205,7 @@ class SemanticCache:
         # Uses the injected EmbeddingGenerator and its existing instrumentation.
         vector = _validate_vector(self.embedder.embed_query(query.strip()))
         now = self._now()  # Check expiration after embedding request latency.
-        try:
-            rows = self._db().execute(
-                "SELECT * FROM cache_entries WHERE " + SCOPE
-                + " AND expires_at > ? ORDER BY created_at, id",
-                (*self._scope, now),
-            ).fetchall()
-        except sqlite3.Error:
-            raise CacheError("Cache lookup failed.") from None
+        rows = self._candidates(now, query.strip())
 
         candidates, entries = {}, {}
         skipped_corrupt_entries = 0
@@ -267,13 +222,7 @@ class SemanticCache:
         row = entries[match.query]
         # Re-read after similarity search: another connection may have invalidated
         # or replaced this entry after the initial candidate snapshot.
-        try:
-            current = self._db().execute(
-                "SELECT * FROM cache_entries WHERE id = ? AND " + SCOPE,
-                (row["id"], *self._scope),
-            ).fetchone()
-        except sqlite3.Error:
-            raise CacheError("Cache lookup failed.") from None
+        current = self._current(row["id"])
         if current is None or current != row:
             return CacheLookup(hit=False, reason="invalidated", skipped_corrupt_entries=skipped_corrupt_entries)
         # Do not return an entry that expired during a long local scan.
@@ -284,13 +233,6 @@ class SemanticCache:
             similarity_score=match.score, entry_id=row["id"], reason="hit",
             skipped_corrupt_entries=skipped_corrupt_entries,
         )
-
-    def _existing(self, query_key, now):
-        row = self._db().execute(
-            "SELECT * FROM cache_entries WHERE " + SCOPE + " AND query_key = ?",
-            (*self._scope, query_key),
-        ).fetchone()
-        return row if row is not None and self._decode(row, now) is not None else None
 
     @staticmethod
     def _duplicate_id(row, response, model):
@@ -316,15 +258,125 @@ class SemanticCache:
             raise ValueError("The response model must be a nonempty string.")
         ttl = self.ttl_seconds if ttl_seconds is None else _positive_seconds(ttl_seconds)
         key = query.strip()
-        try:
-            existing = self._existing(key, self._now())
-            if existing is not None:
-                return self._duplicate_id(existing, response, model)
-        except sqlite3.Error:
-            raise CacheError("Cache storage failed.") from None
+        existing = self._existing(key, self._now())
+        if existing is not None:
+            return self._duplicate_id(existing, response, model)
 
         vector = _validate_vector(self.embedder.embed_query(key))
         blob = vector.astype(VECTOR_DTYPE).tobytes()
+        return self._store_blob(key, query, response, model, blob, ttl)
+
+    def invalidate(
+        self, *, entry_id=None, namespace=None, embedding_model=None,
+        embedding_version=None, cache_version=None,
+    ):
+        """Delete matching rows in a namespace; filters combine with AND.
+
+        Without an explicit namespace, use this instance's namespace. At least
+        one selector is required; use clear() for an intentional current-scope wipe.
+        This does not prevent a caller from saving a newly reviewed answer later.
+        """
+        selectors = {
+            "id": entry_id, "namespace": namespace, "embedding_model": embedding_model,
+            "embedding_version": embedding_version, "cache_version": cache_version,
+        }
+        if all(value is None for value in selectors.values()):
+            raise ValueError("Invalidation requires at least one selector.")
+        if any(value is not None and not _nonempty(value) for value in selectors.values()):
+            raise ValueError("Invalidation selectors must be nonempty strings.")
+        selectors["namespace"] = self.namespace if namespace is None else namespace
+        selected = [(column, value) for column, value in selectors.items() if value is not None]
+        where = " AND ".join(column + " = ?" for column, _ in selected)
+        return self._delete(where, tuple(value for _, value in selected), "Cache invalidation failed.")
+
+    def remove_expired(self):
+        return self._delete("namespace = ? AND expires_at <= ?", (self.namespace, self._now()),
+                            "Expired cache cleanup failed.")
+
+    def clear(self):
+        return self._delete("namespace = ?", (self.namespace,), "Cache clearing failed.")
+
+
+class SemanticCache(CacheBehavior):
+    """One connection per instance/thread; use as a context manager or close it."""
+
+    def __init__(
+        self, path, embedder, *, threshold=_UNSET, config=DEFAULT_CONFIG, ttl_seconds=86400,
+        namespace="default", embedding_version="v1", cache_version=_UNSET, clock=time.time,
+        connection_timeout=5, require_existing=False, allow_initialize=True,
+    ):
+        self._configure(embedder, threshold=threshold, config=config, ttl_seconds=ttl_seconds,
+                        namespace=namespace, embedding_version=embedding_version,
+                        cache_version=cache_version, clock=clock)
+        if (type(connection_timeout) not in (int, float) or not math.isfinite(connection_timeout)
+                or not 0 <= connection_timeout <= 60):
+            raise ValueError("Connection timeout must be between 0 and 60 seconds.")
+        if type(require_existing) is not bool or type(allow_initialize) is not bool:
+            raise ValueError("Database opening policies must be boolean.")
+        self._connection = None
+        try:
+            target = Path(path).absolute().as_uri()+"?mode=rw" if require_existing else path
+            self._connection = sqlite3.connect(target, timeout=connection_timeout, uri=require_existing)
+            self._connection.row_factory = sqlite3.Row
+            with self._connection:
+                self._connection.execute("BEGIN IMMEDIATE")
+                version = self._connection.execute("PRAGMA user_version").fetchone()[0]
+                if version == 0:
+                    if not allow_initialize:
+                        raise CacheError("Explicit database initialization is required.")
+                    tables = self._connection.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table' "
+                        "AND name NOT LIKE 'sqlite_%'"
+                    ).fetchall()
+                    if tables:
+                        raise CacheError("Refusing to initialize an unrelated database.")
+                    self._connection.execute(SCHEMA)
+                    create_expiration_index(self._connection)
+                    self._connection.execute("PRAGMA user_version = 2")
+                elif version == 1:
+                    migrate_v1(self._connection)
+                elif version != SCHEMA_VERSION:
+                    raise CacheError("Unsupported cache schema version.")
+                # Ensure an existing database has the expected table/columns.
+                self._connection.execute(
+                    "SELECT id, query_key, original_query, cached_response, response_model, "
+                    "embedding, created_at, expires_at FROM cache_entries WHERE " + SCOPE
+                    + " LIMIT 0", self._scope,
+                )
+        except (sqlite3.Error, CacheError, ValueError):
+            self.close()
+            raise CacheError("Cache database initialization failed.") from None
+
+    def _candidates(self, now, query_key):
+        try:
+            return self._db().execute(
+                "SELECT * FROM cache_entries WHERE " + SCOPE
+                + " AND expires_at > ? ORDER BY created_at, id",
+                (*self._scope, now),
+            ).fetchall()
+        except sqlite3.Error:
+            raise CacheError("Cache lookup failed.") from None
+
+    def _current(self, entry_id):
+        try:
+            return self._db().execute(
+                "SELECT * FROM cache_entries WHERE id = ? AND " + SCOPE,
+                (entry_id, *self._scope),
+            ).fetchone()
+        except sqlite3.Error:
+            raise CacheError("Cache lookup failed.") from None
+
+    def _existing(self, query_key, now):
+        try:
+            row = self._db().execute(
+                "SELECT * FROM cache_entries WHERE " + SCOPE + " AND query_key = ?",
+                (*self._scope, query_key),
+            ).fetchone()
+        except sqlite3.Error:
+            raise CacheError("Cache storage failed.") from None
+        return row if row is not None and self._decode(row, now) is not None else None
+
+    def _store_blob(self, key, query, response, model, blob, ttl):
         # Short write transaction: no API call occurs while holding a write lock.
         try:
             with self._db():
@@ -355,56 +407,10 @@ class SemanticCache:
         except sqlite3.Error:
             raise CacheError("Cache storage failed.") from None
 
-    def invalidate(
-        self, *, entry_id=None, namespace=None, embedding_model=None,
-        embedding_version=None, cache_version=None,
-    ):
-        """Delete matching rows in a namespace; filters combine with AND.
-
-        Without an explicit namespace, use this instance's namespace. At least
-        one selector is required; use clear() for an intentional current-scope wipe.
-        This does not prevent a caller from saving a newly reviewed answer later.
-        """
-        selectors = {
-            "id": entry_id, "namespace": namespace, "embedding_model": embedding_model,
-            "embedding_version": embedding_version, "cache_version": cache_version,
-        }
-        if all(value is None for value in selectors.values()):
-            raise ValueError("Invalidation requires at least one selector.")
-        if any(value is not None and not _nonempty(value) for value in selectors.values()):
-            raise ValueError("Invalidation selectors must be nonempty strings.")
-        selectors["namespace"] = self.namespace if namespace is None else namespace
-        selected = [(column, value) for column, value in selectors.items() if value is not None]
-        where = " AND ".join(column + " = ?" for column, _ in selected)
+    def _delete(self, where, params, message):
         try:
             with self._db():
-                cursor = self._db().execute(
-                    "DELETE FROM cache_entries WHERE " + where,
-                    tuple(value for _, value in selected),
-                )
+                cursor = self._db().execute("DELETE FROM cache_entries WHERE " + where, params)
             return cursor.rowcount
         except sqlite3.Error:
-            raise CacheError("Cache invalidation failed.") from None
-
-    def remove_expired(self):
-        """Delete expired entries across embedding versions in this namespace."""
-        try:
-            with self._db():
-                cursor = self._db().execute(
-                    "DELETE FROM cache_entries WHERE namespace = ? AND expires_at <= ?",
-                    (self.namespace, self._now()),
-                )
-            return cursor.rowcount
-        except sqlite3.Error:
-            raise CacheError("Expired cache cleanup failed.") from None
-
-    def clear(self):
-        """Delete all entries in this namespace, preserving other namespaces."""
-        try:
-            with self._db():
-                cursor = self._db().execute(
-                    "DELETE FROM cache_entries WHERE namespace = ?", (self.namespace,),
-                )
-            return cursor.rowcount
-        except sqlite3.Error:
-            raise CacheError("Cache clearing failed.") from None
+            raise CacheError(message) from None

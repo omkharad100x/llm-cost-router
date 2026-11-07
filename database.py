@@ -1,17 +1,17 @@
-"""Opt-in persistent SQLite lifecycle; no clients or connections at import."""
+"""Opt-in SQLite and PostgreSQL lifecycle; no clients or connections at import."""
 from contextlib import closing
 from datetime import datetime, timezone
 import sqlite3
 
 from cache_schema import SCHEMA, SCHEMA_VERSION
-from database_config import DatabaseConfig, load_database_config
+from database_config import DatabaseConfig, PostgresConfig, load_database_config
 
 class DatabaseError(RuntimeError):
     """Safe database error without paths, credentials or raw SQLite details."""
 
 def _config(config):
     result = load_database_config() if config is None else config
-    if not isinstance(result, DatabaseConfig):
+    if not isinstance(result, (DatabaseConfig, PostgresConfig)):
         raise ValueError("Expected DatabaseConfig.")
     return result
 
@@ -37,8 +37,11 @@ def _validate_schema(connection):
         raise DatabaseError("Database cache index is incompatible.")
 
 def open_cache(embedder, *, database_config=None, **cache_options):
-    """Return a context-managed SemanticCache; production never creates a file."""
+    """Open a context-managed cache using only the selected backend."""
     config = _config(database_config)
+    if isinstance(config, PostgresConfig):
+        from postgres_cache import PostgresCache
+        return PostgresCache(config, embedder, **cache_options)
     path = _path(config)
     # Import lazily so dashboard configuration checks have no model-layer imports.
     from semantic_cache import SemanticCache, CacheError
@@ -56,8 +59,11 @@ def open_cache(embedder, *, database_config=None, **cache_options):
         raise DatabaseError("Cache database could not be opened or validated.") from None
 
 def initialize_database(config=None):
-    """Explicit creation only; never overwrite an existing file or create folders."""
+    """Initialize a new SQLite file or apply the versioned PostgreSQL migration."""
     config = _config(config)
+    if isinstance(config, PostgresConfig):
+        from postgres_cache import migrate
+        return migrate(config)
     path = _path(config)
     try:
         with path.open("xb"):
@@ -75,6 +81,9 @@ def initialize_database(config=None):
 def verify_database(config=None):
     """Read-only probe: no schema migration, creation, generation or cached text."""
     config = _config(config)
+    if isinstance(config, PostgresConfig):
+        from postgres_cache import verify
+        return verify(config)
     path = _path(config)
     try:
         with closing(sqlite3.connect(path.as_uri()+"?mode=ro", uri=True,

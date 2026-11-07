@@ -1,9 +1,10 @@
-# Database configuration — single-server MVP
+# Cache database configuration
 
-## Decision and scope
+## SQLite local configuration and Task 7 history
 
-Use Python's built-in SQLite on one application server with a durable local
-volume. This deployment target was selected explicitly for this MVP. The cache
+Task 7 supported Python's built-in SQLite on one server with a durable local
+volume. SQLite remains the default local backend. Task 8A adds the PostgreSQL
+adapter for the selected Supabase Free transaction-pooler target. The cache
 already uses SQLite transactions, schema version 2, float32 embedding blobs and
 namespace/version filters. Reusing that tested implementation avoids a premature
 second storage backend.
@@ -32,17 +33,12 @@ multiple servers; network filesystem locking is not an appropriate shortcut.
 See [SQLite deployment guidance](https://sqlite.org/whentouse.html) and
 [network filesystem cautions](https://sqlite.org/useovernet.html).
 
-Managed PostgreSQL is the recommended next step if deployment needs multiple
-hosts, significant concurrent writes or a platform without durable local disk.
-It is not implemented here. A future adapter should use a supported PostgreSQL
-driver, bounded pools, timeouts and certificate/hostname validation
-([PostgreSQL TLS guidance](https://www.postgresql.org/docs/current/libpq-ssl.html)).
-Free plans must be evaluated for storage, connection, compute, suspension and
-backup limits at selection time. No provider, account or paid plan was created.
+PostgreSQL configuration and migration instructions follow the SQLite section.
+No provider account, paid plan or production database was provisioned.
 
 ## Environment configuration
 
-Only these process environment variables are read. No dotenv loading occurs.
+SQLite uses these process environment variables. No dotenv loading occurs.
 
 | Variable | Default | Production requirement |
 | --- | --- | --- |
@@ -162,3 +158,95 @@ rollback/retry, persistence and namespace isolation. Existing cache tests remain
 unchanged. Run:
 
     .\.venv\Scripts\python.exe -B -m pytest tests -q -p no:cacheprovider
+
+
+## PostgreSQL adapter (Task 8A)
+
+Select the backend on the server with `LCR_DATABASE_BACKEND=postgresql` and
+`LCR_DATABASE_MODE=production`. Supply `LCR_POSTGRES_DSN` through the server's
+secret manager. Use the provider-supplied Transaction Pooler hostname, port,
+database and pooler username. Percent-encode credentials as URI components.
+Only the URI options `sslmode=verify-full` and `sslrootcert` are accepted.
+Install the trusted CA for libpq or supply its path with `sslrootcert`. Keep
+the DSN out of browser variables, source files, command lines and logs.
+Omitting the backend selects SQLite. Invalid PostgreSQL settings or failed
+connections raise a sanitized error.
+
+The driver pin is in `requirements.txt`. The server opens an autocommit Psycopg
+3 connection per cache instance and releases it on context exit. Each database
+operation has its own READ COMMITTED transaction, with a five-second connect
+timeout, five-second statement timeout and two-second lock timeout. The adapter
+enforces verified TLS and disables automatic prepared statements. Embedding and
+Python similarity work occur outside database transactions.
+
+PostgreSQL schema version 2 keeps the original query and the full stripped key.
+A private-schema unique constraint indexes the 32-byte SHA-256 digest alongside
+the compatibility scope. The adapter compares full keys whenever a digest
+matches. A collision raises CacheConflictError, including when the existing
+entry is expired. Ordinary semantic matches still use Python similarity and the
+final invalidation and expiry recheck.
+
+Every indexed text scope field has a **128 UTF-8 byte** budget in Python and SQL.
+This includes namespace, embedding model/version/task/dtype, eligibility version,
+cache version and serialized embedding configuration. The namespace bound also
+protects the expiration index. The query key has no new length limit. PostgreSQL
+uses its database clock for TTL creation, duplicate checks, lookup and cleanup.
+A future-dated, unexpired winner blocks replacement. Both backends bind each
+instance to one read-only namespace.
+
+**Upgrade compatibility.** Preserve a backup and pause old writers before the
+explicit upgrade. Migration 001 stays intact. Migration 002 verifies the v1
+contract, takes an exclusive table lock, validates existing scopes, backfills
+digests, installs the new arbiter and advances the version in one transaction.
+Before cutover, check octet_length on all eight indexed text scope columns.
+Oversized legacy scopes, a scoped digest collision, incompatible schema or a
+timeout aborts the upgrade. Review conflicting rows separately; the migration
+does not rename, truncate or discard keys. Older writers omit the now-required
+digest, and older adapters expect version 1. For a large cache, rehearse the
+backfill under the existing five-second statement and two-second lock budgets
+on a disposable restored copy. Restore the backup to roll back after cutover.
+
+Open and verify check UTF-8, table and column shape, types, nullability, identity
+collations, validated checks, primary keys, expiration index and immediate B-tree
+uniqueness suitable for the named conflict target. Resolve custom schema drift
+before retrying. Namespaces remain caller-selected scopes.
+
+**Deferred follow-up.** Lookup currently loads the full eligible scope into
+memory; batching and its impact on deterministic winner selection need separate
+work. Effective production role privileges and exposure of the private schema
+also require a later authorized review. Offline catalog tests do not verify
+Supabase grants, pooler behavior or PostgreSQL execution of the migration.
+
+### Review steps before Task 8B
+
+1. Install pinned dependencies in the project venv and run the offline suite:
+
+       .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+       .\.venv\Scripts\python.exe -B -m pytest tests -q
+
+2. Review the migration and privileges. For a disposable **local** engine check,
+   create an empty database named `lcr_adapter_test` on IPv4 loopback with TLS
+   and a trusted certificate valid for `127.0.0.1`. Provide its DSN in
+   `LCR_TEST_LOCAL_PG_DSN` and set `LCR_TEST_LOCAL_PG=1`. Run
+   `python -m pytest tests/test_postgres_local.py -q`, then unset the test
+   variables and dispose of that database. The test refuses a preexisting
+   application schema. Default runs skip this check.
+
+3. For a subsequently authorized Supabase setup, confirm Free tier, no paid
+   features or automatic billing, and the Transaction Pooler endpoint. Configure
+   the CA and server-side DSN with a migration role. From the project root run
+   `python database_admin.py initialize` once, then `python database_admin.py verify`.
+   Initialization is explicit and repeatable for the recognized migration.
+   These commands are future manual steps; Task 8A tests used synthetic data.
+
+4. Switch the DSN to a dedicated runtime role. Grant CONNECT on the target
+   database, USAGE on `lcr_cache`, SELECT on its version table and
+   SELECT/INSERT/DELETE plus UPDATE(id) on its cache table (FOR UPDATE requires
+   update privilege). Reserve schema creation for the migration role. Exclude
+   the schema from exposed Data API schemas and check that public/anonymous roles
+   have no access. Verify again as the runtime role. The probe validates schema
+   access and indexes, not write permission. Any SQLite data transfer requires
+   a separate reviewed backup, staging import, validation and rollback plan.
+
+Psycopg references: [prepared statements](https://www.psycopg.org/psycopg3/docs/advanced/prepare.html)
+and [transaction contexts](https://www.psycopg.org/psycopg3/docs/basic/transactions.html).

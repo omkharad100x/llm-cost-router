@@ -1,8 +1,10 @@
-"""Explicit SQLite deployment settings; never load environment files."""
+"""Explicit database settings; never load environment files."""
 from dataclasses import dataclass, field
 import math
 import os
+import re
 from pathlib import Path
+from urllib.parse import parse_qsl, urlsplit
 
 ROOT = Path(__file__).resolve().parent
 
@@ -23,9 +25,37 @@ class DatabaseConfig:
                 or not math.isfinite(self.timeout_seconds) or not 0 <= self.timeout_seconds <= 60):
             raise ValueError("Database timeout must be between 0 and 60 seconds.")
 
+@dataclass(frozen=True)
+class PostgresConfig:
+    dsn: str = field(repr=False)
+    mode: str = "production"
+
+    def __post_init__(self):
+        try:
+            url = urlsplit(self.dsn)
+            options = parse_qsl(url.query, strict_parsing=True, keep_blank_values=True)
+            if (self.mode not in ("development", "production")
+                    or url.scheme not in ("postgres", "postgresql") or not url.hostname
+                    or not re.fullmatch(r"[A-Za-z0-9.:-]+", url.hostname)
+                    or any(char.isspace() or ord(char) < 32 for char in self.dsn)
+                    or not url.username or not url.password or url.path in ("", "/")
+                    or url.fragment or (url.port is not None and url.port < 1)
+                    or len(options) != len(dict(options))
+                    or any(k not in ("sslmode", "sslrootcert") or not v for k, v in options)
+                    or dict(options).get("sslmode", "verify-full") != "verify-full"):
+                raise ValueError
+        except (AttributeError, TypeError, ValueError):
+            raise ValueError("Invalid PostgreSQL configuration.") from None
+
+
 def load_database_config(environ=None):
     source = os.environ if environ is None else environ
     mode = source.get("LCR_DATABASE_MODE", "development")
+    backend = source["LCR_DATABASE_BACKEND"] if "LCR_DATABASE_BACKEND" in source else "sqlite"
+    if backend == "postgresql":
+        return PostgresConfig(source.get("LCR_POSTGRES_DSN", ""), mode)
+    if backend != "sqlite":
+        raise ValueError("Unsupported database backend.")
     raw_path = source.get("LCR_DATABASE_PATH")
     raw_timeout = source.get("LCR_DATABASE_TIMEOUT_SECONDS", "5")
     if mode == "production" and not raw_path:
@@ -45,6 +75,6 @@ def database_summary(environ=None):
     """Configuration only: importing or displaying this never opens a database."""
     try:
         config = load_database_config(environ)
-        return dict(backend="SQLite", mode=config.mode, configuration="Configured", connection="Not probed")
+        return dict(backend="PostgreSQL" if isinstance(config, PostgresConfig) else "SQLite", mode=config.mode, configuration="Configured", connection="Not probed")
     except ValueError:
-        return dict(backend="SQLite", mode="Unavailable", configuration="Invalid", connection="Not probed")
+        return dict(backend="Unavailable", mode="Unavailable", configuration="Invalid", connection="Not probed")
